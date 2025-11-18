@@ -19,8 +19,8 @@
 
 ## Hướng dẫn push/pull
 
-1. **Pull nhánh mới nhất trước khi bắt đầu làm việc:**
 ```bash
+1. **Pull nhánh mới nhất trước khi bắt đầu làm việc:**
 git checkout develop
 git pull origin develop
 
