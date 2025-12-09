@@ -1,9 +1,24 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
+
+    <!-- Base Theme -->
     <style name="Base.Theme.BillManager" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <!-- Áp dụng style cho tất cả Toolbar -->
+        <item name="toolbarStyle">@style/MyToolbarStyle</item>
     </style>
 
+    <!-- App Theme -->
     <style name="Theme.BillManager" parent="Base.Theme.BillManager" />
+
+    <!-- Style cho Toolbar -->
+    <style name="MyToolbarStyle" parent="Widget.Material3.Toolbar">
+        <item name="titleTextAppearance">@style/ToolbarTitleBold</item>
+    </style>
+
+    <!-- Style cho title đậm -->
+    <style name="ToolbarTitleBold" parent="TextAppearance.Material3.TitleLarge">
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:textColor">#1A1A1A</item>
+    </style>
+
 </resources>
