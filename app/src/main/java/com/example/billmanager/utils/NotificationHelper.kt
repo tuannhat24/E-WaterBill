@@ -1,5 +1,6 @@
-package com.example.billmanager
+package com.example.billmanager.utils
 
+import android.R
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -8,6 +9,9 @@ import android.content.Intent
 import android.graphics.Color
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import com.example.billmanager.data.model.NotificationType
+import com.example.billmanager.ui.notification.HomeNotificationsActivity
+import com.example.billmanager.ui.MainActivity
 
 class NotificationHelper(private val context: Context) {
 
@@ -58,10 +62,10 @@ class NotificationHelper(private val context: Context) {
 
         // Chọn icon dựa trên loại thông báo
         val icon = when (type) {
-            NotificationType.ELECTRIC -> android.R.drawable.ic_menu_compass // Thay bằng icon sấm sét nếu có
-            NotificationType.WATER -> android.R.drawable.ic_menu_myplaces   // Thay bằng icon giọt nước nếu có
-            NotificationType.WARNING -> android.R.drawable.ic_dialog_alert
-            else -> android.R.drawable.ic_dialog_info
+            NotificationType.ELECTRIC -> R.drawable.ic_menu_compass // Thay bằng icon sấm sét nếu có
+            NotificationType.WATER -> R.drawable.ic_menu_myplaces   // Thay bằng icon giọt nước nếu có
+            NotificationType.WARNING -> R.drawable.ic_dialog_alert
+            else -> R.drawable.ic_dialog_info
         }
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
@@ -72,7 +76,7 @@ class NotificationHelper(private val context: Context) {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
-            .addAction(android.R.drawable.ic_menu_view, "Xem chi tiết", detailsPendingIntent) // Action Button 1
+            .addAction(R.drawable.ic_menu_view, "Xem chi tiết", detailsPendingIntent) // Action Button 1
 
         // Nếu là cảnh báo đóng tiền, thêm nút "Đã thanh toán" (Mock action)
         if (type == NotificationType.WARNING || type == NotificationType.ELECTRIC || type == NotificationType.WATER) {
@@ -80,7 +84,7 @@ class NotificationHelper(private val context: Context) {
             val payPendingIntent = PendingIntent.getActivity(
                 context, id + 1000, payIntent, PendingIntent.FLAG_IMMUTABLE
             )
-            builder.addAction(android.R.drawable.ic_menu_send, "Thanh toán ngay", payPendingIntent) // Action Button 2
+            builder.addAction(R.drawable.ic_menu_send, "Thanh toán ngay", payPendingIntent) // Action Button 2
         }
 
         notificationManager.notify(id, builder.build())

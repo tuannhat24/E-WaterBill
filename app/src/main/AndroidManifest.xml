@@ -13,11 +13,11 @@
         android:theme="@style/Theme.BillManager">
 
         <receiver
-            android:name=".ReminderReceiver"
+            android:name=".utils.ReminderReceiver"
             android:exported="true" />
 
         <activity
-            android:name=".HomeNotificationsActivity"
+            android:name=".ui.notification.HomeNotificationsActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -27,7 +27,7 @@
 
         <!-- Màn hình cài đặt thông báo -->
         <activity
-            android:name=".NotificationSetting"
+            android:name=".ui.setting.NotificationSetting"
             android:exported="false" />
 
         <!-- Màn hình MainActivity -->

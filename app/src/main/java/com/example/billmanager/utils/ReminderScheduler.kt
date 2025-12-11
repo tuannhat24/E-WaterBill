@@ -1,4 +1,4 @@
-package com.example.billmanager
+package com.example.billmanager.utils
 
 import android.app.AlarmManager
 import android.app.PendingIntent
@@ -9,6 +9,7 @@ import java.util.Calendar
 object ReminderScheduler {
 
     fun scheduleDailyReminder(context: Context, hour: Int, minute: Int) {
+        // Lưu ý: ReminderReceiver giờ đã nằm trong package utils
         val intent = Intent(context, ReminderReceiver::class.java)
         val pendingIntent = PendingIntent.getBroadcast(
             context,
@@ -25,6 +26,8 @@ object ReminderScheduler {
         }
 
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+        // Sử dụng setRepeating hoặc setExactAndAllowWhileIdle tùy yêu cầu độ chính xác
         alarmManager.setRepeating(
             AlarmManager.RTC_WAKEUP,
             calendar.timeInMillis,

@@ -1,24 +1,27 @@
-package com.example.billmanager
+package com.example.billmanager.ui.setting
 
 import android.app.TimePickerDialog
+import android.content.Context
 import android.os.Bundle
 import android.widget.ImageView
 import android.widget.SeekBar
 import android.widget.Switch
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import com.example.billmanager.R
+import com.example.billmanager.utils.ReminderScheduler
 import com.google.android.material.appbar.MaterialToolbar
 import java.util.Calendar
 
 class NotificationSetting : AppCompatActivity() {
 
-    lateinit var toolbar: MaterialToolbar
-    lateinit var switchReminder: Switch
-    lateinit var sliderDays: SeekBar
-    lateinit var tvDaysBefore: TextView
-    lateinit var tvTime: TextView
-    lateinit var btnPickTime: ImageView
-    lateinit var tvSampleNotification: TextView
+    private lateinit var toolbar: MaterialToolbar
+    private lateinit var switchReminder: Switch
+    private lateinit var sliderDays: SeekBar
+    private lateinit var tvDaysBefore: TextView
+    private lateinit var tvTime: TextView
+    private lateinit var btnPickTime: ImageView
+    private lateinit var tvSampleNotification: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,33 +43,23 @@ class NotificationSetting : AppCompatActivity() {
     }
 
     private fun setEvent() {
-        // Btn back
+        // Sự kiện nút Back
         toolbar.setNavigationOnClickListener { finish() }
 
-        // Lắng nghe bật/tắt nhắc nhở
+        // Sự kiện Bật/Tắt nhắc nhở
         switchReminder.setOnCheckedChangeListener { _, isChecked ->
-            sliderDays.isEnabled = isChecked
-            btnPickTime.isEnabled = isChecked
+            updateUIState(isChecked)
             saveBoolean("reminderEnabled", isChecked)
 
             if (isChecked) {
-                // Lấy giờ từ TextView tvTime
-                val timeParts = tvTime.text.split(":", " ")
-                var hour = timeParts[0].toInt()
-                val minute = timeParts[1].toInt()
-                val amPm = timeParts[2]
-                if (amPm == "PM" && hour < 12) hour += 12
-                if (amPm == "AM" && hour == 12) hour = 0
-
-                ReminderScheduler.scheduleDailyReminder(this, hour, minute)
+                // Lấy giờ hiện tại trên UI để đặt lịch
+                scheduleCurrentTime()
             } else {
                 ReminderScheduler.cancelDailyReminder(this)
             }
         }
 
-
-
-        // Lắng nghe thay đổi số ngày
+        // Sự kiện thay đổi thanh trượt số ngày
         sliderDays.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 val days = progress + 1
@@ -80,57 +73,48 @@ class NotificationSetting : AppCompatActivity() {
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
 
-        // Lắng nghe chọn giờ
+        // Sự kiện chọn giờ
         btnPickTime.setOnClickListener { showTimePicker() }
-
-        updateSampleNotification(sliderDays.progress + 1)
     }
 
-    //  LƯU DỮ LIỆU LOCAL
-    private fun saveBoolean(key: String, value: Boolean) {
-        val pref = getSharedPreferences("NotificationSetting", MODE_PRIVATE)
-        pref.edit().putBoolean(key, value).apply()
+    // --- CÁC HÀM XỬ LÝ LOGIC RIÊNG (PRIVATE) ---
+
+    private fun updateUIState(isEnabled: Boolean) {
+        sliderDays.isEnabled = isEnabled
+        btnPickTime.isEnabled = isEnabled
+        // Có thể thay đổi màu sắc hoặc alpha nếu cần để người dùng biết là đang disable
+        btnPickTime.alpha = if (isEnabled) 1.0f else 0.5f
     }
 
-    private fun saveInt(key: String, value: Int) {
-        val pref = getSharedPreferences("NotificationSetting", MODE_PRIVATE)
-        pref.edit().putInt(key, value).apply()
-    }
-
-    private fun saveString(key: String, value: String) {
-        val pref = getSharedPreferences("NotificationSetting", MODE_PRIVATE)
-        pref.edit().putString(key, value).apply()
-    }
-
-    //  LOAD DỮ LIỆU LOCAL
     private fun loadSavedSettings() {
-        val pref = getSharedPreferences("NotificationSetting", MODE_PRIVATE)
+        val pref = getSharedPreferences("NotificationSetting", Context.MODE_PRIVATE)
 
         val enabled = pref.getBoolean("reminderEnabled", false)
         val days = pref.getInt("daysBefore", 3)
         val time = pref.getString("reminderTime", "8:00 AM")
 
-        // Gán lại UI
+        // Gán dữ liệu lên View
         switchReminder.isChecked = enabled
         sliderDays.progress = days - 1
         tvDaysBefore.text = days.toString()
         tvTime.text = time
 
-        // Nếu tắt -> disable UI
-        sliderDays.isEnabled = enabled
-        btnPickTime.isEnabled = enabled
+        // Update trạng thái enable/disable của các nút con
+        updateUIState(enabled)
+
+        // Update text mẫu
+        updateSampleNotification(days)
     }
 
-    //  TIME PICKER
     private fun showTimePicker() {
         val calendar = Calendar.getInstance()
-        val hour = calendar.get(Calendar.HOUR_OF_DAY)
-        val minute = calendar.get(Calendar.MINUTE)
+        val currentHour = calendar.get(Calendar.HOUR_OF_DAY)
+        val currentMinute = calendar.get(Calendar.MINUTE)
 
         val dialog = TimePickerDialog(
             this,
             { _, selectedHour, selectedMinute ->
-
+                // Format giờ hiển thị (AM/PM)
                 val amPm = if (selectedHour >= 12) "PM" else "AM"
                 val displayHour = when {
                     selectedHour > 12 -> selectedHour - 12
@@ -141,35 +125,56 @@ class NotificationSetting : AppCompatActivity() {
                 val timeString = String.format("%d:%02d %s", displayHour, selectedMinute, amPm)
                 tvTime.text = timeString
 
+                // Lưu và đặt lịch lại
                 saveString("reminderTime", timeString)
-                applyNewSchedule()
+                scheduleCurrentTime()
             },
-            hour,
-            minute,
+            currentHour,
+            currentMinute,
             false
         )
-
         dialog.show()
     }
 
-    private fun applyNewSchedule() {
-        val pref = getSharedPreferences("NotificationSetting", MODE_PRIVATE)
+    private fun scheduleCurrentTime() {
+        val timeStr = tvTime.text.toString() // "8:00 AM"
+        try {
+            // Parse chuỗi giờ để lấy hour, minute
+            // Split theo dấu ":" và khoảng trắng " "
+            val parts = timeStr.split(":", " ")
+            if (parts.size >= 3) {
+                var hour = parts[0].toInt()
+                val minute = parts[1].toInt()
+                val amPm = parts[2]
 
-        val time = pref.getString("reminderTime", "8:00 AM") ?: "8:00 AM"
+                if (amPm == "PM" && hour != 12) hour += 12
+                if (amPm == "AM" && hour == 12) hour = 0
 
-        val parts = time.split(" ", ":")
-        var hour = parts[0].toInt()
-        val minute = parts[1].toInt()
-        val amPm = parts[2]
-
-        if (amPm == "PM" && hour != 12) hour += 12
-        if (amPm == "AM" && hour == 12) hour = 0
-
-        ReminderScheduler.scheduleDailyReminder(this, hour, minute)
+                ReminderScheduler.scheduleDailyReminder(this, hour, minute)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     private fun updateSampleNotification(days: Int) {
         val sample = "Hóa đơn điện của bạn sẽ đến hạn trong $days ngày.\nSố tiền: 450.000 VND"
         tvSampleNotification.text = sample
+    }
+
+    // Helpers lưu SharedPreferences
+    private fun saveBoolean(key: String, value: Boolean) {
+        getSharedPreferences("NotificationSetting", Context.MODE_PRIVATE)
+            .edit().putBoolean(key, value).apply()
+    }
+
+    private fun saveInt(key: String, value: Int) {
+        getSharedPreferences("NotificationSetting", Context.MODE_PRIVATE)
+            .edit().putInt(key, value).apply()
+    }
+
+    private fun saveString(key: String, value: String) {
+        getSharedPreferences("NotificationSetting", Context.MODE_PRIVATE)
+            .edit().putString(key, value).apply()
     }
 }

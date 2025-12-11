@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="#F5F7FA"
     android:padding="16dp"
-    tools:context=".NotificationSetting">
+    tools:context=".ui.setting.NotificationSetting">
 
     <LinearLayout
         android:layout_width="match_parent"
