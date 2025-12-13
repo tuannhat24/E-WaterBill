@@ -54,7 +54,6 @@ class BudgetActivity : AppCompatActivity() {
         setupChart()
         observeData()
     }
-
     private fun setControl() {
         edtElectric = findViewById(R.id.edtElectricBudget)
         edtWater = findViewById(R.id.edtWaterBudget)
@@ -69,7 +68,6 @@ class BudgetActivity : AppCompatActivity() {
         tvWaterAdvice = findViewById(R.id.tvWaterAdvice)
         barChart = findViewById(R.id.barChartBudget)
     }
-
     private fun setEvent() {
         btnSave.setOnClickListener {
             val electricLimit = edtElectric.text.toString().toDoubleOrNull() ?: 0.0
@@ -82,7 +80,6 @@ class BudgetActivity : AppCompatActivity() {
         }
     }
 
-    // Quan sát dữ liệu
     private fun observeData() {
         // Quan sát Budget Điện
         viewModel.getBudgetForElectric().observe(this) { budget ->
@@ -182,7 +179,7 @@ class BudgetActivity : AppCompatActivity() {
         xAxis.valueFormatter = IndexAxisValueFormatter(months)
         xAxis.position = XAxis.XAxisPosition.BOTTOM
         xAxis.granularity = 1f
-        xAxis.setCenterAxisLabels(true) // Căn giữa label
+        xAxis.setCenterAxisLabels(true)
 
         // Animation
         barChart.animateY(1500)
