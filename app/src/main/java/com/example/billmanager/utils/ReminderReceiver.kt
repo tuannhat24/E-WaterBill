@@ -6,6 +6,7 @@ import android.content.Intent
 import com.example.billmanager.data.local.database.AppDatabase
 import com.example.billmanager.data.local.entity.NotificationEntity
 import com.example.billmanager.data.model.NotificationType
+import com.example.billmanager.data.repository.NotificationRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -14,57 +15,55 @@ import java.util.Random
 class ReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
         val helper = NotificationHelper(context)
+
+        // Khởi tạo Repository từ Room Database
         val database = AppDatabase.getDatabase(context)
-        val repository = com.example.billmanager.data.repository.NotificationRepository(database.notificationDao())
+        val repository = NotificationRepository(database.notificationDao())
 
-        // MOCK LOGIC: Giả lập sinh thông báo Điện/Nước
-        val random = Random()
-        val showElectric = random.nextBoolean()
+        // Logic Random giả lập thông báo (Giữ lại để test)
+        val random = Random().nextInt(100)
 
-        // Cần chạy coroutine vì thao tác DB không được chạy trên Main Thread
         CoroutineScope(Dispatchers.IO).launch {
-            if (showElectric) {
-                val noti = NotificationEntity(
-                    title = "Hóa đơn Tiền Điện",
-                    message = "Hóa đơn điện tháng này sắp hết hạn.",
-                    type = NotificationType.ELECTRIC,
-                    timestamp = System.currentTimeMillis()
-                )
-                repository.insert(noti) // Lưu vào Room
+            val noti: NotificationEntity
+            val notiId: Int
 
-                // Show Push Notification
-                helper.showNotification(noti.title, noti.message, 1001, NotificationType.ELECTRIC)
-            } else {
-                val noti = NotificationEntity(
-                    title = "Hóa đơn Tiền Nước",
-                    message = "Đã có hóa đơn nước kỳ mới.",
-                    type = NotificationType.WATER,
-                    timestamp = System.currentTimeMillis()
-                )
-                repository.insert(noti)
-                helper.showNotification(noti.title, noti.message, 1002, NotificationType.WATER)
+            when {
+                random < 30 -> { // 30% cơ hội ra cảnh báo Budget
+                    noti = NotificationEntity(
+                        title = "⚠️ Cảnh báo chi tiêu",
+                        message = "Bạn đã dùng vượt 90% hạn mức Điện tháng này!",
+                        type = NotificationType.WARNING,
+                        timestamp = System.currentTimeMillis()
+                    )
+                    notiId = 1000
+                }
+
+                random < 65 -> { // 35% cơ hội ra hóa đơn Điện
+                    noti = NotificationEntity(
+                        title = "Hóa đơn Tiền Điện",
+                        message = "Hóa đơn điện tháng này đã có. Vui lòng kiểm tra.",
+                        type = NotificationType.ELECTRIC,
+                        timestamp = System.currentTimeMillis()
+                    )
+                    notiId = 1001
+                }
+
+                else -> { // 35% cơ hội ra hóa đơn Nước
+                    noti = NotificationEntity(
+                        title = "Hóa đơn Tiền Nước",
+                        message = "Đã có hóa đơn nước kỳ mới.",
+                        type = NotificationType.WATER,
+                        timestamp = System.currentTimeMillis()
+                    )
+                    notiId = 1002
+                }
             }
+
+            // Lưu vào Database
+            repository.insert(noti)
+
+            // Hiển thị thông báo lên thanh trạng thái
+            helper.showNotification(noti.title, noti.message, notiId, noti.type)
         }
     }
-
-    // Hàm phụ trợ để lưu thông báo mới sinh ra vào SharedPreferences (để list cập nhật)
-//    private fun saveNotificationToStorage(context: Context, notification: Notification) {
-//        val sharedPref = context.getSharedPreferences("NotificationData", Context.MODE_PRIVATE)
-//        val gson = Gson()
-//        val json = sharedPref.getString("notifications", null)
-//        val type = object : TypeToken<MutableList<Notification>>() {}.type
-//
-//        val list: MutableList<Notification> = if (json != null) {
-//            gson.fromJson(json, type)
-//        } else {
-//            mutableListOf()
-//        }
-//
-//        list.add(0, notification) // Thêm vào đầu danh sách
-//
-//        // Giới hạn lưu 20 thông báo gần nhất để tránh nặng máy
-//        if (list.size > 20) list.removeAt(list.size - 1)
-//
-//        sharedPref.edit().putString("notifications", gson.toJson(list)).apply()
-//    }
 }

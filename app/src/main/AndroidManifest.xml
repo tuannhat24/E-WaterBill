@@ -12,41 +12,23 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.BillManager">
 
-        <!-- Broadcast Receiver -->
-        <receiver
-            android:name=".utils.ReminderReceiver"
-            android:exported="false" />
-
-        <!-- MAIN / LAUNCHER -->
         <activity
-            android:name=".ui.MainActivity"
+            android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <!-- Prediction -->
-        <activity
-            android:name=".ui.prediction.PredictionActivity"
+        <receiver
+            android:name=".utils.ReminderReceiver"
             android:exported="false" />
-
-        <!-- Budget -->
-        <activity
-            android:name=".ui.budget.BudgetActivity"
-            android:exported="false" />
-
-        <!-- Notification -->
-        <activity
-            android:name=".ui.notification.HomeNotificationsActivity"
-            android:exported="false" />
-
-        <!-- Settings -->
-        <activity
-            android:name=".ui.setting.NotificationSetting"
-            android:exported="false" />
-
+        <activity android:name=".ui.settings.SettingsActivity" />
+        <activity android:name=".ui.notification.NotificationsActivity" />
+        <activity android:name=".ui.setting.NotificationSetting" />
+        <activity android:name=".ui.budget.BudgetActivity" />
+        <activity android:name=".ui.prediction.PredictionActivity" />
     </application>
 
 </manifest>

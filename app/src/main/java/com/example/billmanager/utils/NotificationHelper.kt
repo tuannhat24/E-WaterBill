@@ -10,8 +10,8 @@ import android.graphics.Color
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.example.billmanager.data.model.NotificationType
-import com.example.billmanager.ui.notification.HomeNotificationsActivity
-import com.example.billmanager.ui.MainActivity
+import com.example.billmanager.ui.notification.NotificationsActivity
+import com.example.billmanager.MainActivity
 
 class NotificationHelper(private val context: Context) {
 
@@ -47,7 +47,7 @@ class NotificationHelper(private val context: Context) {
     // Hàm hiển thị thông báo nâng cao
     fun showNotification(title: String, message: String, id: Int, type: NotificationType) {
         // Intent khi click vào thông báo -> Mở màn hình danh sách thông báo
-        val intent = Intent(context, HomeNotificationsActivity::class.java).apply {
+        val intent = Intent(context, NotificationsActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
         val pendingIntent = PendingIntent.getActivity(
@@ -80,7 +80,7 @@ class NotificationHelper(private val context: Context) {
 
         // Nếu là cảnh báo đóng tiền, thêm nút "Đã thanh toán" (Mock action)
         if (type == NotificationType.WARNING || type == NotificationType.ELECTRIC || type == NotificationType.WATER) {
-            val payIntent = Intent(context, HomeNotificationsActivity::class.java)
+            val payIntent = Intent(context, NotificationsActivity::class.java)
             val payPendingIntent = PendingIntent.getActivity(
                 context, id + 1000, payIntent, PendingIntent.FLAG_IMMUTABLE
             )

@@ -4,6 +4,7 @@ import android.graphics.Color
 import android.graphics.DashPathEffect
 import android.os.Bundle
 import android.widget.Button
+import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -32,6 +33,8 @@ class PredictionActivity : AppCompatActivity() {
     private lateinit var tvComparisonMessage: TextView
     private lateinit var tvSuggestion: TextView
     private lateinit var btnAdjust: Button
+    private lateinit var tvTitle: TextView
+    private lateinit var btnBack: ImageButton
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,13 +64,19 @@ class PredictionActivity : AppCompatActivity() {
         tvComparisonMessage = findViewById(R.id.tvComparisonMessage)
         tvSuggestion = findViewById(R.id.tvSuggestion)
         btnAdjust = findViewById(R.id.btnAdjustBudget)
+        tvTitle = findViewById(R.id.tvTitle)
+        tvTitle.text = "🔮 Dự Đoán Chi Tiêu Tháng Tới"
+        btnBack = findViewById(R.id.btnBack)
     }
 
     private fun setEvent() {
         btnAdjust.setOnClickListener {
-            // Quay lại màn hình Budget để chỉnh sửa
+            Toast.makeText(this, "Điều chỉnh Hạn mức ngay", Toast.LENGTH_SHORT).show()
             finish()
-            // Hoặc start BudgetActivity nếu đang đi từ màn hình khác
+        }
+
+        btnBack.setOnClickListener {
+            finish()
         }
     }
 
