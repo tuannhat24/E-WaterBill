@@ -20,6 +20,7 @@ import com.github.mikephil.charting.data.BarDataSet
 import com.github.mikephil.charting.data.BarEntry
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import android.graphics.Color
+import android.widget.ImageButton
 
 class BudgetActivity : AppCompatActivity() {
 
@@ -39,6 +40,8 @@ class BudgetActivity : AppCompatActivity() {
     private lateinit var tvElectricAdvice: TextView
     private lateinit var tvWaterAdvice: TextView
     private lateinit var barChart: BarChart
+    private lateinit var tvTitle: TextView
+    private lateinit var btnBack: ImageButton
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,6 +70,9 @@ class BudgetActivity : AppCompatActivity() {
         tvElectricAdvice = findViewById(R.id.tvElectricAdvice)
         tvWaterAdvice = findViewById(R.id.tvWaterAdvice)
         barChart = findViewById(R.id.barChartBudget)
+        tvTitle = findViewById(R.id.tvTitle)
+        tvTitle.text = "Quản lý hạn mức"
+        btnBack = findViewById(R.id.btnBack)
     }
     private fun setEvent() {
         btnSave.setOnClickListener {
@@ -77,6 +83,10 @@ class BudgetActivity : AppCompatActivity() {
             if (waterLimit > 0) viewModel.saveBudget(2, waterLimit)
 
             Toast.makeText(this, "Đã lưu hạn mức chi tiêu!", Toast.LENGTH_SHORT).show()
+        }
+
+        btnBack.setOnClickListener {
+            finish()
         }
     }
 

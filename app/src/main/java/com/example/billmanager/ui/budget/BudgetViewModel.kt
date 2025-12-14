@@ -32,13 +32,13 @@ class BudgetViewModel(private val repository: BudgetRepository) : ViewModel() {
         }
     }
 
-    // Fake data số tiền đã dùng để test UI
+    // data số tiền đã dùng để test UI
     fun getCurrentUsage(type: Int): Double {
         return if (type == 1) 450000.0 else 120000.0
     }
 }
 
-// Class Factory để khởi tạo ViewModel (Bắt buộc khi không dùng Hilt)
+// Class Factory để khởi tạo ViewModel
 class BudgetViewModelFactory(private val repository: BudgetRepository) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(BudgetViewModel::class.java)) {
