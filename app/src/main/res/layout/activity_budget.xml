@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:text="Quản lý Hạn Mức"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_gravity="center"
+            android:layout_marginBottom="20dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <TextView
+            android:text="⚡ TIỀN ĐIỆN"
+            android:textStyle="bold"
+            android:textColor="#FF9800"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Nhập hạn mức Điện (VNĐ)">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edtElectricBudget"
+                android:inputType="numberDecimal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            android:id="@+id/tvElectricStatus"
+            android:text="Đã dùng: 0đ / 0đ"
+            android:layout_marginTop="8dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <ProgressBar
+            android:id="@+id/progressElectric"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="20dp"
+            android:max="100"
+            android:progress="0"
+            android:layout_marginTop="5dp"/>
+
+        <TextView
+            android:id="@+id/tvElectricAlert"
+            android:text="Trạng thái ổn định"
+            android:textSize="12sp"
+            android:layout_marginBottom="20dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <TextView
+            android:id="@+id/tvElectricAdvice"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#795548"
+            android:textStyle="italic"
+            android:visibility="gone"
+            android:text="Gợi ý: Tắt bớt điện..."/>
+
+        <TextView
+            android:text="💧 TIỀN NƯỚC"
+            android:textStyle="bold"
+            android:textColor="#2196F3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Nhập hạn mức Nước (VNĐ)">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edtWaterBudget"
+                android:inputType="numberDecimal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            android:id="@+id/tvWaterStatus"
+            android:text="Đã dùng: 0đ / 0đ"
+            android:layout_marginTop="8dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <ProgressBar
+            android:id="@+id/progressWater"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="20dp"
+            android:max="100"
+            android:progress="0"
+            android:layout_marginTop="5dp"/>
+
+        <TextView
+            android:id="@+id/tvWaterAlert"
+            android:text="Trạng thái ổn định"
+            android:textSize="12sp"
+            android:layout_marginBottom="20dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <TextView
+            android:id="@+id/tvWaterAdvice"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#795548"
+            android:textStyle="italic"
+            android:visibility="gone"
+            android:text="Gợi ý: Khóa vòi nước..."/>
+
+        <Button
+            android:id="@+id/btnSaveBudget"
+            android:text="Lưu Cấu Hình"
+            android:layout_gravity="center"
+            android:layout_marginTop="10dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#CCCCCC"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="20dp"/>
+
+        <TextView
+            android:text="📊 Thống Kê 6 Tháng Gần Nhất"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="10dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <com.github.mikephil.charting.charts.BarChart
+            android:id="@+id/barChartBudget"
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            android:layout_marginBottom="30dp"/>
+    </LinearLayout>
+</ScrollView>
