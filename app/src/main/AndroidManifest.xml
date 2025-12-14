@@ -11,33 +11,42 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.BillManager">
-        <activity
-            android:name=".ui.prediction.PredictionActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <activity
-            android:name=".ui.budget.BudgetActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+        <!-- Broadcast Receiver -->
+        <receiver
+            android:name=".utils.ReminderReceiver"
+            android:exported="false" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+        <!-- MAIN / LAUNCHER -->
         <activity
             android:name=".ui.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Prediction -->
+        <activity
+            android:name=".ui.prediction.PredictionActivity"
+            android:exported="false" />
+
+        <!-- Budget -->
+        <activity
+            android:name=".ui.budget.BudgetActivity"
+            android:exported="false" />
+
+        <!-- Notification -->
+        <activity
+            android:name=".ui.notification.HomeNotificationsActivity"
+            android:exported="false" />
+
+        <!-- Settings -->
+        <activity
+            android:name=".ui.setting.NotificationSetting"
+            android:exported="false" />
+
     </application>
 
 </manifest>
