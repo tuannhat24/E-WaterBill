@@ -24,6 +24,14 @@
         <activity android:name=".ui.auth.register.RegisterActivity" />
         <activity android:name=".ui.MainActivity" />
         <activity android:name=".ui.auth.profile.ProfileActivity" />
+        <receiver
+            android:name=".utils.ReminderReceiver"
+            android:exported="false" />
+        <activity android:name=".ui.settings.SettingsActivity" />
+        <activity android:name=".ui.notification.NotificationsActivity" />
+        <activity android:name=".ui.setting.NotificationSetting" />
+        <activity android:name=".ui.budget.BudgetActivity" />
+        <activity android:name=".ui.prediction.PredictionActivity" />
     </application>
 
 </manifest>
