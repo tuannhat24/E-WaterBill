@@ -7,7 +7,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F9FAFB"
-    tools:context=".ui.tinhtiendiennuoc.MainTinhTienDienNuoc">
+    tools:context=".MainTinhTienDienNuoc">
 
     <!-- Tiêu đề -->
     <TextView

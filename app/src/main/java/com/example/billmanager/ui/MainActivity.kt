@@ -1,4 +1,4 @@
-package com.example.billmanager.ui.main
+package com.example.billmanager.ui
 
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge

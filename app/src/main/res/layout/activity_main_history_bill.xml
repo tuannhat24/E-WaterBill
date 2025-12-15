@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:background="#E3F2FD">
+
+    <!-- TIÊU ĐỀ -->
+    <TextView
+        android:id="@+id/tvHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="LỊCH SỬ HÓA ĐƠN"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:textColor="#0D47A1"
+        android:padding="10dp" />
+
+    <!-- BỘ LỌC NẰM 1 DÒNG NGANG - KÉO NGANG ĐƯỢC -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="none"
+        android:padding="8dp">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnAll"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:text="Tất cả"
+                android:background="@drawable/bg_filter_button" />
+
+            <Button
+                android:id="@+id/btnDien"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:text="Điện"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_filter_button" />
+
+            <Button
+                android:id="@+id/btnNuoc"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:text="Nước"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_filter_button" />
+
+            <Button
+                android:id="@+id/btnChuaThanhToan"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:text="Chưa thanh toán"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_filter_button" />
+
+            <Button
+                android:id="@+id/btnDaThanhToan"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:text="Đã thanh toán"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_filter_button" />
+
+        </LinearLayout>
+
+    </HorizontalScrollView>
+
+
+    <!-- TÌM KIẾM THÁNG/NĂM -->
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <EditText
+            android:id="@+id/edtThang"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Tháng (1–12)"
+            android:background="@drawable/bg_edittext"
+            android:padding="10dp"
+            android:inputType="number" />
+
+        <EditText
+            android:id="@+id/edtNam"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/bg_edittext"
+            android:hint="Năm (2025)"
+            android:padding="10dp"
+            android:inputType="number" />
+
+        <Button
+            android:id="@+id/btnSearch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tìm"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/bg_button_blue" />
+    </LinearLayout>
+
+    <!-- DANH SÁCH HÓA ĐƠN -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvHoaDon"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp" />
+
+    <!-- PHÂN TRANG -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="6dp">
+
+        <Button
+            android:id="@+id/btnFirst"
+            android:text="&lt;&lt;"
+            android:background="@drawable/bg_button_blue_small"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:id="@+id/btnPrev"
+            android:text="&lt;"
+            android:background="@drawable/bg_button_blue_small"
+            android:layout_marginStart="8dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <!-- ✅ PHẦN QUAN TRỌNG -->
+        <HorizontalScrollView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/llPages"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </HorizontalScrollView>
+
+        <Button
+            android:id="@+id/btnNext"
+            android:text="&gt;"
+            android:background="@drawable/bg_button_blue_small"
+            android:layout_marginEnd="8dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:id="@+id/btnLast"
+            android:text="&gt;&gt;"
+            android:background="@drawable/bg_button_blue_small"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+
+    <!-- NÚT CUỐI CÙNG -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp">
+
+        <Button
+            android:id="@+id/btnBack"
+            android:text="QUAY LẠI"
+            android:background="@drawable/bg_button_gray"
+            android:layout_marginEnd="20dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <Button
+            android:id="@+id/btnThanhToan"
+            android:text="THANH TOÁN"
+            android:background="@drawable/bg_button_blue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+    </LinearLayout>
+
+</LinearLayout>

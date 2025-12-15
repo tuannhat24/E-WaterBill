@@ -16,8 +16,10 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven { url = uri("https://jitpack.io") } // ✅ THÊM DÒNG NÀY
     }
 }
+
 
 rootProject.name = "BillManager"
 include(":app")
