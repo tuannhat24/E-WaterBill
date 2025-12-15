@@ -1,4 +1,4 @@
-package com.example.billmanager.ui
+package com.example.billmanager.ui.history_bill
 
 import android.view.LayoutInflater
 import android.view.View
@@ -24,7 +24,7 @@ class HoaDonAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HoaDonViewHolder {
         val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_history_bill, parent, false)
+            .inflate(R.layout.item_list_bill, parent, false)
         return HoaDonViewHolder(view)
     }
 
