@@ -13,7 +13,7 @@
         android:theme="@style/Theme.BillManager">
 
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.auth.login.LoginActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -21,6 +21,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".ui.auth.register.RegisterActivity" />
+        <activity android:name=".ui.MainActivity" />
+        <activity android:name=".ui.auth.profile.ProfileActivity" />
         <receiver
             android:name=".utils.ReminderReceiver"
             android:exported="false" />
