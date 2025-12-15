@@ -9,7 +9,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.billmanager.R
-import com.example.billmanager.data.local.database.UsersDB
+import com.example.billmanager.data.local.database.AppDatabase
 import com.example.billmanager.data.local.entity.User
 import com.example.billmanager.ui.auth.login.LoginActivity
 import com.example.billmanager.utils.UserSession
@@ -23,7 +23,7 @@ class ProfileActivity : AppCompatActivity() {
     lateinit var btnEdit: LinearLayout
     lateinit var btnDeleteAccount: LinearLayout
     lateinit var btnLogout: LinearLayout
-    lateinit var db: UsersDB
+    lateinit var db: AppDatabase
     var isEditing = false
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,7 +44,7 @@ class ProfileActivity : AppCompatActivity() {
     }
 
     private fun setEvent() {
-        db = UsersDB.getInstance(this)
+        db = AppDatabase.getInstance(this)
         val session = UserSession(this)
         val email = session.getUserEmail()
         //lấy thông tin user theo email

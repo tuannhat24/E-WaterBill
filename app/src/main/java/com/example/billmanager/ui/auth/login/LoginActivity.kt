@@ -9,8 +9,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.billmanager.R
-import com.example.billmanager.data.local.database.UsersDB
 import com.example.billmanager.MainActivity
+import com.example.billmanager.data.local.database.AppDatabase
 import com.example.billmanager.ui.auth.profile.ProfileActivity
 import com.example.billmanager.ui.auth.register.RegisterActivity
 import com.example.billmanager.utils.UserSession
@@ -21,7 +21,7 @@ class LoginActivity : AppCompatActivity() {
     lateinit var edtPassword: EditText
     lateinit var btnLogin: Button
     lateinit var txtSignup: TextView
-    lateinit var db: UsersDB
+    lateinit var db: AppDatabase
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
@@ -38,7 +38,7 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun setEvent() {
-        db = UsersDB.getInstance(this)
+        db = AppDatabase.getInstance(this)
 
         //xử lý đăng nhập
         btnLogin.setOnClickListener {
