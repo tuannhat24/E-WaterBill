@@ -22,7 +22,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".ui.auth.register.RegisterActivity" />
-        <activity android:name=".ui.MainActivity" />
+        <activity android:name="MainActivity" />
         <activity android:name=".ui.auth.profile.ProfileActivity" />
         <receiver
             android:name=".utils.ReminderReceiver"

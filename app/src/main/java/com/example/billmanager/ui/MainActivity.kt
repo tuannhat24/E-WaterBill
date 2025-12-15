@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.lifecycle.ViewModelProvider
+import com.example.billmanager.ui.auth.profile.ProfileActivity
 import com.example.billmanager.ui.budget.BudgetActivity
 import com.example.billmanager.ui.notification.NotificationsActivity
 import com.example.billmanager.ui.notification.NotificationViewModel
@@ -40,7 +41,7 @@ class MainActivity : AppCompatActivity() {
     private fun setEvent() {
         // --- MODULE 1: PROFILE ---
         findViewById<View>(R.id.imgAvatar).setOnClickListener {
-            Toast.makeText(this, "Module 1: Authentication & Profile (Đặng Quang Dinh)", Toast.LENGTH_SHORT).show()
+            startActivity(Intent(this, ProfileActivity::class.java))
         }
 
         // --- MODULE 2 & 3: BILL MANAGEMENT ---

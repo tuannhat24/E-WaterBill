@@ -10,7 +10,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.billmanager.R
 import com.example.billmanager.data.local.database.UsersDB
-import com.example.billmanager.ui.MainActivity
+import com.example.billmanager.MainActivity
 import com.example.billmanager.ui.auth.profile.ProfileActivity
 import com.example.billmanager.ui.auth.register.RegisterActivity
 import com.example.billmanager.utils.UserSession
@@ -61,7 +61,7 @@ class LoginActivity : AppCompatActivity() {
                     session.saveUser(userCurrent.email)
 
                     Toast.makeText(this, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show()
-                    startActivity(Intent(this, ProfileActivity::class.java))
+                    startActivity(Intent(this, MainActivity::class.java))
                     finish()
                 }else {
                     Toast.makeText(this, "Sai email hoặc mật khẩu", Toast.LENGTH_SHORT).show()
