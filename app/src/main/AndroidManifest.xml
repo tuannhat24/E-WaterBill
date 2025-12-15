@@ -32,6 +32,8 @@
         <activity android:name=".ui.setting.NotificationSetting" />
         <activity android:name=".ui.budget.BudgetActivity" />
         <activity android:name=".ui.prediction.PredictionActivity" />
+        <activity android:name=".ui.input.InputBillActivity" />
+        <activity android:name=".ui.history_bill.BillListActivity" />
     </application>
 
 </manifest>

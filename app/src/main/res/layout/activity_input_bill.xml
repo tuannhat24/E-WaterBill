@@ -6,32 +6,12 @@
     android:orientation="vertical"
     android:background="#F5F5F5">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:padding="16dp"
-        android:background="#FFFFFF"
-        android:elevation="4dp">
+    <!-- HEADER -->
+    <include
+        android:id="@+id/layoutHeader"
+        layout="@layout/layout_header" />
 
-        <ImageButton
-            android:id="@+id/btnBack"
-
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:contentDescription="Back"/>
-
-        <TextView
-            android:text="Thêm Hóa Đơn Mới"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:textColor="#333333"
-            android:layout_marginStart="16dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-    </LinearLayout>
+    <!-- CONTENT -->
 
     <ScrollView
         android:layout_width="match_parent"

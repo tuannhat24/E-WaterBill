@@ -6,8 +6,14 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.billmanager.R
 import com.example.billmanager.data.local.database.AppDatabase
 import com.example.billmanager.data.local.entity.HoaDonEntity
+import com.example.billmanager.data.local.entity.NotificationEntity
+import com.example.billmanager.data.model.NotificationType
 import com.example.billmanager.data.repository.HoaDonRepository
 import com.example.billmanager.utils.BillCalculator
+import com.example.billmanager.utils.NotificationHelper
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -19,8 +25,9 @@ class InputBillActivity : AppCompatActivity() {
     private lateinit var edtChiSoCu: EditText
     private lateinit var edtChiSoMoi: EditText
     private lateinit var tvTamTinh: TextView
+    private lateinit var tvTitle: TextView
     private lateinit var btnLuu: Button
-    private lateinit var btnBack: ImageButton // Nút Back
+    private lateinit var btnBack: ImageButton
 
     private lateinit var repository: HoaDonRepository
 
@@ -45,6 +52,8 @@ class InputBillActivity : AppCompatActivity() {
         tvTamTinh = findViewById(R.id.tvTamTinh)
         btnLuu = findViewById(R.id.btnLuu)
         btnBack = findViewById(R.id.btnBack)
+        tvTitle = findViewById(R.id.tvTitle)
+        tvTitle.text = "Thêm Hóa Đơn"
     }
 
     private fun setEvent() {
@@ -111,11 +120,35 @@ class InputBillActivity : AppCompatActivity() {
             trangThai = "Chưa thanh toán"
         )
 
-        // TODO: Kiểm tra trùng lặp (Tháng/Năm/Loại) trước khi Insert
-        // val existing = repository.findBill(thang, nam, loaiStr) -> Cần thêm hàm này trong DAO
-
+        // Lưu hóa đơn
         repository.insert(hoaDon)
-        Toast.makeText(this, "Đã lưu hóa đơn thành công!", Toast.LENGTH_SHORT).show()
-        finish() // Đóng màn hình nhập
+
+        // Tạo thông báo mới
+        CoroutineScope(Dispatchers.IO).launch {
+            val db = AppDatabase.getInstance(this@InputBillActivity)
+
+            // Tạo nội dung thông báo
+            val notiTitle = "Hóa đơn mới: ${hoaDon.loai}"
+            val notiMsg = "Đã thêm hóa đơn T${hoaDon.thang}/${hoaDon.nam}. Tổng: ${String.format("%,d", hoaDon.tongTien)}đ"
+            val notiType = if (hoaDon.loai == "Điện") NotificationType.ELECTRIC else NotificationType.WATER
+
+            // Lưu vào DB Notification
+            val newNoti = NotificationEntity(
+                title = notiTitle,
+                message = notiMsg,
+                type = notiType,
+                timestamp = System.currentTimeMillis()
+            )
+            db.notificationDao().insertNotification(newNoti)
+
+            // Bắn Push Notification ngay lập tức
+            runOnUiThread {
+                val helper = NotificationHelper(this@InputBillActivity)
+                helper.showNotification(notiTitle, notiMsg, (System.currentTimeMillis() % 10000).toInt(), notiType)
+            }
+        }
+
+        Toast.makeText(this, "Đã lưu hóa đơn và tạo thông báo!", Toast.LENGTH_SHORT).show()
+        finish()
     }
 }
