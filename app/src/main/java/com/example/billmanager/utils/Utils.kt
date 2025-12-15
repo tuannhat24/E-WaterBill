@@ -1,8 +1,9 @@
-package com.example.billmanager
+package com.example.billmanager.utils
 
 import android.text.InputType
 import android.view.MotionEvent
 import android.widget.EditText
+import com.example.billmanager.R
 
 fun setupShowHidePassword(editText: EditText) {
     var isPasswordVisible = false
