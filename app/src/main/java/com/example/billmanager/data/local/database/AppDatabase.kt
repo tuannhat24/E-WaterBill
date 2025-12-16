@@ -14,15 +14,18 @@ import com.example.billmanager.data.local.entity.Budget
 import com.example.billmanager.data.local.entity.HoaDonEntity
 import com.example.billmanager.data.local.entity.NotificationEntity
 import com.example.billmanager.data.local.entity.User
+import com.example.billmanager.data.local.dao.LocationDao
+import com.example.billmanager.data.local.entity.LocationEntity
 
 @Database(
     entities = [
         User::class,
         HoaDonEntity::class,
         Budget::class,
-        NotificationEntity::class
+        NotificationEntity::class,
+        LocationEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class) // Để xử lý NotificationType, Date...
@@ -32,6 +35,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun hoaDonDao(): HoaDonDao
     abstract fun budgetDao(): BudgetDao
     abstract fun notificationDao(): NotificationDao
+    abstract fun locationDao(): LocationDao
 
     companion object {
         @Volatile

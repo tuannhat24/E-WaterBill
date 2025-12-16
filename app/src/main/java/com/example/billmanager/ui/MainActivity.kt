@@ -17,6 +17,7 @@ import com.example.billmanager.ui.auth.profile.ProfileActivity
 import com.example.billmanager.ui.budget.BudgetActivity
 import com.example.billmanager.ui.history_bill.BillListActivity // Mod 3: Danh sách & Phân tích
 import com.example.billmanager.ui.input.InputBillActivity       // Mod 2: Nhập liệu
+import com.example.billmanager.ui.location.LocationActivity
 import com.example.billmanager.ui.notification.NotificationsActivity
 import com.example.billmanager.ui.notification.NotificationViewModel
 import com.example.billmanager.ui.prediction.PredictionActivity
@@ -114,19 +115,19 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, ProfileActivity::class.java))
         }
 
-        // --- MODULE 2: NHẬP HÓA ĐƠN ---
+        // --- MODULE 2: BILL MANAGER ---
         cardInputBill.setOnClickListener {
             startActivity(Intent(this, InputBillActivity::class.java))
         }
 
-        // --- MODULE 3: DANH SÁCH & PHÂN TÍCH ---
+        // --- MODULE 3: BILL DISPLAY ANALYTICS ---
         cardBillList.setOnClickListener {
             startActivity(Intent(this, BillListActivity::class.java))
         }
 
-        // --- MODULE 5: ĐỊA ĐIỂM (Chưa làm) ---
+        // --- MODULE 5: LOCATION ---
         cardLocation.setOnClickListener {
-            Toast.makeText(this, "Module 5: Địa điểm & Backup (Đang phát triển)", Toast.LENGTH_SHORT).show()
+            startActivity(Intent(this, LocationActivity::class.java))
         }
 
         // --- MODULE 4: NOTIFICATION & BUDGET & PREDICTION ---
