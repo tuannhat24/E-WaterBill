@@ -11,7 +11,6 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.BillManager">
-
         <activity
             android:name=".ui.auth.login.LoginActivity"
             android:exported="true">
@@ -22,11 +21,13 @@
             </intent-filter>
         </activity>
         <activity android:name=".ui.auth.register.RegisterActivity" />
-        <activity android:name="MainActivity" />
+        <activity android:name=".MainActivity" />
         <activity android:name=".ui.auth.profile.ProfileActivity" />
+
         <receiver
             android:name=".utils.ReminderReceiver"
             android:exported="false" />
+
         <activity android:name=".ui.settings.SettingsActivity" />
         <activity android:name=".ui.notification.NotificationsActivity" />
         <activity android:name=".ui.setting.NotificationSetting" />
@@ -34,6 +35,8 @@
         <activity android:name=".ui.prediction.PredictionActivity" />
         <activity android:name=".ui.input.InputBillActivity" />
         <activity android:name=".ui.history_bill.BillListActivity" />
+        <activity android:name=".ui.history_bill.BillDetailActivity"/>
+        <activity android:name=".ui.history_bill.AnalyticsActivity"/>
     </application>
 
 </manifest>

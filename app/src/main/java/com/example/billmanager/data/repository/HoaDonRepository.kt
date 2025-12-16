@@ -14,6 +14,10 @@ class HoaDonRepository(private val dao: HoaDonDao) {
 
     fun delete(entity: HoaDonEntity) = dao.delete(entity)
 
+    fun getBillByMonth(loai: String, thang: Int, nam: Int) = dao.getBillByMonth(loai, thang, nam)
+    fun getBillsByYear(loai: String, nam: Int) = dao.getBillsByYear(loai, nam)
+    fun getLast3Bills(loai: String) = dao.getLast3Bills(loai)
+
     fun clear() = dao.clearAll()
 }
 

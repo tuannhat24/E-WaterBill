@@ -39,6 +39,15 @@
             app:tint="#2196F3"
             android:layout_width="48dp"
             android:layout_height="48dp"/>
+
+        <ImageButton
+            android:id="@+id/btnAnalytics"
+            android:src="@android:drawable/ic_menu_sort_by_size"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:tint="#FF9800"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginEnd="4dp"/>
     </LinearLayout>
 
     <HorizontalScrollView
