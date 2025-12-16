@@ -5,14 +5,19 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.lifecycle.ViewModelProvider
-import com.example.billmanager.data.local.database.UsersDB
+import com.example.billmanager.data.local.database.AppDatabase
+import com.example.billmanager.ui.auth.login.LoginActivity
 import com.example.billmanager.ui.auth.profile.ProfileActivity
 import com.example.billmanager.ui.budget.BudgetActivity
+import com.example.billmanager.ui.history_bill.BillListActivity // Mod 3: Danh sách & Phân tích
+import com.example.billmanager.ui.input.InputBillActivity       // Mod 2: Nhập liệu
+import com.example.billmanager.ui.location.LocationActivity
 import com.example.billmanager.ui.notification.NotificationsActivity
 import com.example.billmanager.ui.notification.NotificationViewModel
 import com.example.billmanager.ui.prediction.PredictionActivity
@@ -23,24 +28,85 @@ import com.example.billmanager.utils.UserSession
 class MainActivity : AppCompatActivity() {
 
     private lateinit var notificationViewModel: NotificationViewModel
+    private lateinit var userSession: UserSession
+    private lateinit var db: AppDatabase
+
+    // Controls
+    private lateinit var imgAvatar: ImageView
+    private lateinit var tvUserName: TextView
+    private lateinit var tvUserDesc: TextView
     private lateinit var tvUnreadCount: TextView
-    private lateinit var tvWelcome: TextView
-    lateinit var db: UsersDB
+    private lateinit var btnOpenSettings: ImageButton
+
+    // Cards
+    private lateinit var cardInputBill: CardView
+    private lateinit var cardBillList: CardView
+    private lateinit var cardBudget: CardView
+    private lateinit var cardNotifications: CardView
+    private lateinit var cardPrediction: CardView
+    private lateinit var cardLocation: CardView
+
+    // Test
+    private lateinit var btnTestNotify: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // 1. Khởi tạo DB & Session
+        db = AppDatabase.getInstance(this)
+        userSession = UserSession(this)
         notificationViewModel = ViewModelProvider(this)[NotificationViewModel::class.java]
+
+        // 2. Kiểm tra Login (Module 1)
+        if (!userSession.isLoggedIn()) {
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+            return
+        }
 
         setControl()
         setEvent()
+        loadUserProfile()
         observeNotifications()
     }
 
+    override fun onResume() {
+        super.onResume()
+        // Load lại dữ liệu mỗi khi quay lại màn hình chính
+        if (userSession.isLoggedIn()) {
+            loadUserProfile()
+        }
+    }
+
     private fun setControl() {
+        imgAvatar = findViewById(R.id.imgAvatar)
+        tvUserName = findViewById(R.id.tvUserName)
+        tvUserDesc = findViewById(R.id.tvUserDesc)
         tvUnreadCount = findViewById(R.id.tvUnreadCount)
-        tvWelcome = findViewById(R.id.tvWelcome)
+        btnOpenSettings = findViewById(R.id.btnOpenSettings)
+
+        cardInputBill = findViewById(R.id.cardInputBill)
+        cardBillList = findViewById(R.id.cardBillList)
+        cardBudget = findViewById(R.id.cardBudget)
+        cardNotifications = findViewById(R.id.cardNotifications)
+        cardPrediction = findViewById(R.id.cardPrediction)
+        cardLocation = findViewById(R.id.cardLocation)
+        btnTestNotify = findViewById(R.id.btnTestNotify)
+    }
+
+    private fun loadUserProfile() {
+        val email = userSession.getUserEmail()
+        // Lưu ý: findByEmail chạy trên Main Thread vì trong AppDatabase đã có allowMainThreadQueries()
+        val user = db.userDao().findByEmail(email)
+
+        if (user != null) {
+            tvUserName.text = "Xin chào, ${user.fullName}!"
+            tvUserDesc.text = user.email
+        } else {
+            tvUserName.text = "Xin chào!"
+            tvUserDesc.text = email ?: "Khách"
+        }
     }
 
     private fun setEvent() {
@@ -51,47 +117,41 @@ class MainActivity : AppCompatActivity() {
         val currentUser = db.userDao().findByEmail(email)
         tvWelcome.text = "Chào mừng ${currentUser?.fullName}"
         // --- MODULE 1: PROFILE ---
-        findViewById<View>(R.id.imgAvatar).setOnClickListener {
+        imgAvatar.setOnClickListener {
             startActivity(Intent(this, ProfileActivity::class.java))
         }
 
-        // --- MODULE 2 & 3: BILL MANAGEMENT ---
-        findViewById<CardView>(R.id.cardInputBill).setOnClickListener {
-            Toast.makeText(this, "Module 2: Nhập chỉ số (Nguyễn Lý Khai Tâm)", Toast.LENGTH_SHORT).show()
+        // --- MODULE 2: BILL MANAGER ---
+        cardInputBill.setOnClickListener {
+            startActivity(Intent(this, InputBillActivity::class.java))
         }
-        findViewById<CardView>(R.id.cardBillList).setOnClickListener {
-            Toast.makeText(this, "Module 3: Danh sách & So sánh (Nguyễn Thành Tài)", Toast.LENGTH_SHORT).show()
+
+        // --- MODULE 3: BILL DISPLAY ANALYTICS ---
+        cardBillList.setOnClickListener {
+            startActivity(Intent(this, BillListActivity::class.java))
         }
 
         // --- MODULE 5: LOCATION ---
-        findViewById<CardView>(R.id.cardLocation).setOnClickListener {
-            Toast.makeText(this, "Module 5: Địa điểm & Backup (Bùi Lộc Thành)", Toast.LENGTH_SHORT).show()
+        cardLocation.setOnClickListener {
+            startActivity(Intent(this, LocationActivity::class.java))
         }
 
-        // --- MODULE 4: NOTIFICATION & APP CONFIG (Bùi Nhật Tuấn) ---
-
-        // 1. Settings (Góc phải trên)
-        findViewById<ImageButton>(R.id.btnOpenSettings).setOnClickListener {
+        // --- MODULE 4: NOTIFICATION & BUDGET & PREDICTION ---
+        btnOpenSettings.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
-
-        // 2. Budget
-        findViewById<CardView>(R.id.cardBudget).setOnClickListener {
+        cardBudget.setOnClickListener {
             startActivity(Intent(this, BudgetActivity::class.java))
         }
-
-        // 3. Notifications
-        findViewById<CardView>(R.id.cardNotifications).setOnClickListener {
+        cardNotifications.setOnClickListener {
             startActivity(Intent(this, NotificationsActivity::class.java))
         }
-
-        // 4. Prediction
-        findViewById<CardView>(R.id.cardPrediction).setOnClickListener {
+        cardPrediction.setOnClickListener {
             startActivity(Intent(this, PredictionActivity::class.java))
         }
 
-        // --- Developer Test ---
-        findViewById<Button>(R.id.btnTestNotify).setOnClickListener {
+        // Developer Test Button
+        btnTestNotify.setOnClickListener {
             val intent = Intent(this, ReminderReceiver::class.java)
             sendBroadcast(intent)
             Toast.makeText(this, "Đã gửi Broadcast Notification!", Toast.LENGTH_SHORT).show()

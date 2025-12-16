@@ -1,7 +1,6 @@
 package com.example.billmanager.ui.prediction
 
 import android.graphics.Color
-import android.graphics.DashPathEffect
 import android.os.Bundle
 import android.widget.Button
 import android.widget.ImageButton
@@ -10,7 +9,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import com.example.billmanager.R
-import com.example.billmanager.data.local.database.BudgetDatabase
+import com.example.billmanager.data.local.database.AppDatabase
 import com.example.billmanager.data.repository.BudgetRepository
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.XAxis
@@ -18,7 +17,6 @@ import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
-import com.github.mikephil.charting.interfaces.datasets.ILineDataSet
 
 class PredictionActivity : AppCompatActivity() {
 
@@ -41,7 +39,7 @@ class PredictionActivity : AppCompatActivity() {
         setContentView(R.layout.activity_prediction)
 
         // Init ViewModel
-        val db = BudgetDatabase.getDatabase(this)
+        val db = AppDatabase.getDatabase(this)
         val repo = BudgetRepository(db.budgetDao())
         val factory = PredictionViewModelFactory(repo)
         viewModel = ViewModelProvider(this, factory)[PredictionViewModel::class.java]

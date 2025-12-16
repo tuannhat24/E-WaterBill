@@ -4,21 +4,19 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.ImageButton
-import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.billmanager.R
-import com.example.billmanager.data.local.datastore.AppDataStore
+import com.example.billmanager.data.local.database.AppDatabase
 import com.example.billmanager.ui.setting.NotificationSetting
 import kotlinx.coroutines.launch
 
 class SettingsActivity : AppCompatActivity() {
 
-    private lateinit var appDataStore: AppDataStore
+    private lateinit var appDataStore: AppDatabase
 
     // Controls
     private lateinit var btnNavNotification: LinearLayout
@@ -32,7 +30,7 @@ class SettingsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
 
-        appDataStore = AppDataStore(this)
+        appDataStore = AppDatabase.getDatabase(this)
 
         setControl()
         setEvent()

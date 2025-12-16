@@ -9,7 +9,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import com.example.billmanager.R
-import com.example.billmanager.data.local.database.BudgetDatabase
 import com.example.billmanager.data.repository.BudgetRepository
 import com.example.billmanager.utils.BudgetUtils
 import com.google.android.material.textfield.TextInputEditText
@@ -21,6 +20,7 @@ import com.github.mikephil.charting.data.BarEntry
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import android.graphics.Color
 import android.widget.ImageButton
+import com.example.billmanager.data.local.database.AppDatabase
 
 class BudgetActivity : AppCompatActivity() {
 
@@ -47,7 +47,7 @@ class BudgetActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_budget)
 
-        val database = BudgetDatabase.getDatabase(this)
+        val database = AppDatabase.getDatabase(this)
         val repository = BudgetRepository(database.budgetDao())
         val factory = BudgetViewModelFactory(repository)
         viewModel = ViewModelProvider(this, factory)[BudgetViewModel::class.java]

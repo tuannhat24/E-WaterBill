@@ -9,7 +9,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.billmanager.R
-import com.example.billmanager.data.local.database.UsersDB
+import com.example.billmanager.data.local.database.AppDatabase
 import com.example.billmanager.data.local.entity.User
 import com.example.billmanager.ui.auth.login.LoginActivity
 import com.example.billmanager.utils.setupShowHidePassword
@@ -21,7 +21,7 @@ class RegisterActivity : AppCompatActivity() {
     lateinit var edtConfirmPassword: EditText
     lateinit var btnRegister: Button
     lateinit var txtSinIn: TextView
-    lateinit var db: UsersDB
+    lateinit var db: AppDatabase
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register)
@@ -41,7 +41,7 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     private fun setEvent() {
-        db = UsersDB.getInstance(this)
+        db = AppDatabase.getInstance(this)
 
         btnRegister.setOnClickListener {
             val fullName = edtFullName.text.toString().trim()
