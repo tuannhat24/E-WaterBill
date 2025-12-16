@@ -110,12 +110,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setEvent() {
-        db = UsersDB.getInstance(this)
-        val session = UserSession(this)
-        val email = session.getUserEmail()
-        //lấy thông tin user theo email
-        val currentUser = db.userDao().findByEmail(email)
-        tvWelcome.text = "Chào mừng ${currentUser?.fullName}"
         // --- MODULE 1: PROFILE ---
         imgAvatar.setOnClickListener {
             startActivity(Intent(this, ProfileActivity::class.java))
