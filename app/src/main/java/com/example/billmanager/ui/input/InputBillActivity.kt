@@ -44,11 +44,13 @@ class InputBillActivity : AppCompatActivity() {
         val db = AppDatabase.getInstance(this)
         repository = HoaDonRepository(db.hoaDonDao())
 
+        // 1. Ánh xạ View
         setControl()
 
+        // 2. Load Spinner
         loadLocationSpinner()
 
-        // Kiểm tra xem có phải đang sửa hóa đơn không
+        // 3. Kiểm tra Edit
         if (intent.hasExtra("BILL_EDIT")) {
             billToEdit = intent.getSerializableExtra("BILL_EDIT") as HoaDonEntity
             fillDataToEdit(billToEdit!!)
@@ -75,26 +77,15 @@ class InputBillActivity : AppCompatActivity() {
     }
 
     private fun loadLocationSpinner() {
-        // Lấy danh sách địa điểm từ DB
         listLocation = AppDatabase.getInstance(this).locationDao().getAll()
-
-        // Nếu chưa có địa điểm nào, tạo list ảo để tránh crash (dù Module 5 thường đã tạo default)
-        val locationNames = if (listLocation.isNotEmpty()) {
-            listLocation.map { it.name }
-        } else {
-            listOf("Mặc định")
-        }
-
+        val locationNames = if (listLocation.isNotEmpty()) listLocation.map { it.name } else listOf("Mặc định")
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, locationNames)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spnLocation.adapter = adapter
 
-        // Tự động chọn địa điểm đang active (isSelected = true)
         if (listLocation.isNotEmpty()) {
             val activeIndex = listLocation.indexOfFirst { it.isSelected }
-            if (activeIndex >= 0) {
-                spnLocation.setSelection(activeIndex)
-            }
+            if (activeIndex >= 0) spnLocation.setSelection(activeIndex)
         }
     }
 
@@ -103,10 +94,8 @@ class InputBillActivity : AppCompatActivity() {
         edtNam.setText(bill.nam.toString())
         edtChiSoCu.setText(bill.chiSoDau.toString())
         edtChiSoMoi.setText(bill.chiSoCuoi.toString())
-
         if (bill.loai == "Điện") rbDien.isChecked = true else rbNuoc.isChecked = true
 
-        // Chọn lại đúng địa điểm của hóa đơn đang sửa
         if (listLocation.isNotEmpty()) {
             val index = listLocation.indexOfFirst { it.id == bill.locationId }
             if (index >= 0) spnLocation.setSelection(index)
@@ -115,10 +104,7 @@ class InputBillActivity : AppCompatActivity() {
 
     private fun setEvent() {
         btnBack.setOnClickListener { finish() }
-
-        btnLuu.setOnClickListener {
-            saveOrUpdateBill()
-        }
+        btnLuu.setOnClickListener { saveOrUpdateBill() }
     }
 
     private fun saveOrUpdateBill() {
@@ -154,15 +140,8 @@ class InputBillActivity : AppCompatActivity() {
         val currentTime = Calendar.getInstance().time
         val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
         val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        val locationId = if (listLocation.isNotEmpty()) listLocation[spnLocation.selectedItemPosition].id else 1
 
-        // Lấy ID địa điểm đang chọn
-        val locationId = if (listLocation.isNotEmpty()) {
-            listLocation[spnLocation.selectedItemPosition].id
-        } else {
-            1 // Fallback nếu lỗi
-        }
-
-        // Tạo object
         val hoaDon = HoaDonEntity(
             id = billToEdit?.id ?: 0,
             loai = loaiStr,
@@ -175,21 +154,27 @@ class InputBillActivity : AppCompatActivity() {
             gio = billToEdit?.gio ?: timeFormat.format(currentTime),
             ngay = billToEdit?.ngay ?: dateFormat.format(currentTime),
             trangThai = billToEdit?.trangThai ?: "Chưa thanh toán",
-            locationId = locationId // <--- LƯU LOCATION ID VÀO ĐÂY
+            locationId = locationId
         )
 
         if (billToEdit != null) {
             repository.update(hoaDon)
+            // Kiểm tra Budget sau khi Sửa
+            checkBudgetAndNotify(hoaDon)
             Toast.makeText(this, "Đã cập nhật hóa đơn!", Toast.LENGTH_SHORT).show()
         } else {
             repository.insert(hoaDon)
+            // Bắn thông báo thêm mới
             triggerNotification(hoaDon)
+            // Kiểm tra Budget sau khi Thêm
+            checkBudgetAndNotify(hoaDon)
             Toast.makeText(this, "Đã thêm hóa đơn mới!", Toast.LENGTH_SHORT).show()
         }
 
         finish()
     }
 
+    // Thông báo đã thêm hóa đơn
     private fun triggerNotification(hoaDon: HoaDonEntity) {
         CoroutineScope(Dispatchers.IO).launch {
             val db = AppDatabase.getInstance(this@InputBillActivity)
@@ -198,20 +183,51 @@ class InputBillActivity : AppCompatActivity() {
             val notiType = if (hoaDon.loai == "Điện") NotificationType.ELECTRIC else NotificationType.WATER
 
             val newNoti = NotificationEntity(
-                title = notiTitle,
-                message = notiMsg,
-                type = notiType,
-                timestamp = System.currentTimeMillis()
+                title = notiTitle, message = notiMsg, type = notiType, timestamp = System.currentTimeMillis()
             )
             db.notificationDao().insertNotification(newNoti)
 
             runOnUiThread {
                 NotificationHelper(this@InputBillActivity).showNotification(
-                    notiTitle,
-                    notiMsg,
-                    (System.currentTimeMillis() % 10000).toInt(),
-                    notiType
+                    notiTitle, notiMsg, (System.currentTimeMillis() % 10000).toInt(), notiType
                 )
+            }
+        }
+    }
+
+    // Kiểm tra vượt hạn mức
+    private fun checkBudgetAndNotify(bill: HoaDonEntity) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val db = AppDatabase.getInstance(this@InputBillActivity)
+            val typeId = if (bill.loai == "Điện") 1 else 2 // 1: Điện, 2: Nước
+
+            // 1. Lấy Budget của tháng/năm/loại tương ứng (Dùng hàm Sync vừa thêm trong DAO)
+            val budget = db.budgetDao().getBudgetSync(bill.thang, bill.nam, typeId)
+
+            if (budget != null) {
+                // 2. Tính tổng tiền đã tiêu cho loại này trong tháng này
+                val allBills = db.hoaDonDao().getAll()
+                val totalSpent = allBills
+                    .filter { it.loai == bill.loai && it.thang == bill.thang && it.nam == bill.nam }
+                    .sumOf { it.tongTien }
+
+                // 3. So sánh
+                if (totalSpent > budget.amountLimit) {
+                    val diff = totalSpent - budget.amountLimit
+                    val title = "⚠️ CẢNH BÁO CHI TIÊU"
+                    val msg = "Tiền ${bill.loai} T${bill.thang} vượt hạn mức ${String.format("%,.0f", diff)}đ!"
+
+                    val noti = NotificationEntity(
+                        title = title, message = msg, type = NotificationType.WARNING, timestamp = System.currentTimeMillis()
+                    )
+                    db.notificationDao().insertNotification(noti)
+
+                    runOnUiThread {
+                        NotificationHelper(this@InputBillActivity).showNotification(
+                            title, msg, (System.currentTimeMillis().toInt() + 1), NotificationType.WARNING
+                        )
+                    }
+                }
             }
         }
     }

@@ -1,68 +1,104 @@
 package com.example.billmanager.ui.prediction
 
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.billmanager.data.local.database.AppDatabase
+import com.example.billmanager.data.local.entity.HoaDonEntity
 import com.example.billmanager.data.repository.BudgetRepository
-import com.example.billmanager.utils.PredictionAlgorithm
+import com.example.billmanager.data.repository.HoaDonRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
-class PredictionViewModel(private val budgetRepo: BudgetRepository) : ViewModel() {
+class PredictionViewModel(application: Application) : AndroidViewModel(application) {
 
+    private val billRepo: HoaDonRepository
+    private val budgetRepo: BudgetRepository
+
+    // LiveData chứa kết quả dự báo
     private val _predictionData = MutableLiveData<PredictionResult>()
     val predictionData: LiveData<PredictionResult> = _predictionData
 
-    // Data Class chứa kết quả trả về cho View
+    // Data Class chứa kết quả trả về cho UI
     data class PredictionResult(
-        val totalAmount: Double,
-        val electricAmount: Double,
-        val waterAmount: Double,
-        val confidence: String,
-        val historyElectric: List<Double>, // Để vẽ biểu đồ
-        val budgetTotal: Double // Để so sánh
+        val totalPredicted: Double,
+        val electricPredicted: Double,
+        val waterPredicted: Double,
+        val budgetTotal: Double,
+        val historyElectric: List<Double>,
+        val historyWater: List<Double>,
+        val message: String
     )
 
+    init {
+        val db = AppDatabase.getInstance(application)
+        billRepo = HoaDonRepository(db.hoaDonDao())
+        budgetRepo = BudgetRepository(db.budgetDao())
+    }
+
     fun calculatePrediction() {
-        viewModelScope.launch {
-            // 1. Giả lập lấy dữ liệu lịch sử từ Module 1 (Bill Database)
-            // Trong thực tế: val historyBills = billRepository.getLast6Months()
-            val historyElectric = listOf(450000.0, 470000.0, 460000.0, 480000.0, 500000.0) // 5 tháng qua
-            val historyWater = listOf(100000.0, 110000.0, 105000.0, 100000.0, 120000.0)
+        viewModelScope.launch(Dispatchers.IO) {
+            val allBills = billRepo.getAll()
 
-            // 2. Tính toán dự đoán (Dùng Algorithm)
-            val predElectric = PredictionAlgorithm.predictNextMonth(historyElectric)
-            val predWater = PredictionAlgorithm.predictNextMonth(historyWater)
+            // 1. Lấy dữ liệu lịch sử
+            val electricHistory = getHistoryData(allBills, "Điện")
+            val waterHistory = getHistoryData(allBills, "Nước")
+
+            // 2. Dự báo tháng tới
+            val predElectric = calculateMovingAverage(electricHistory)
+            val predWater = calculateMovingAverage(waterHistory)
             val totalPred = predElectric + predWater
-            val confidence = PredictionAlgorithm.getConfidenceLevel(historyElectric.size)
 
-            // 3. Lấy Budget hiện tại từ Module 4 (Room DB)
-            // (Ở đây lấy LiveData và observe thủ công hoặc lấy value trực tiếp nếu dùng hàm suspend trả về object)
-            // giả định budget là 600k (có thể thay bằng logic gọi DB thật)
-            val currentBudget = 600000.0
+            // 3. Lấy Budget hiện tại (Sử dụng hàm Sync chuẩn từ Repository)
+            val calendar = Calendar.getInstance()
+            val month = calendar.get(Calendar.MONTH) + 1
+            val year = calendar.get(Calendar.YEAR)
 
-            // 4. Post kết quả
-            _predictionData.value = PredictionResult(
-                totalAmount = totalPred,
-                electricAmount = predElectric,
-                waterAmount = predWater,
-                confidence = confidence,
-                historyElectric = historyElectric,
-                budgetTotal = currentBudget
+            // Lấy ngân sách Điện + Nước
+            val elecBudget = budgetRepo.getBudgetSync(month, year, 1)?.amountLimit ?: 0.0
+            val waterBudget = budgetRepo.getBudgetSync(month, year, 2)?.amountLimit ?: 0.0
+            val budgetTotal = elecBudget + waterBudget
+
+            // 4. Tạo thông báo
+            val msg = if (budgetTotal > 0 && totalPred > budgetTotal) {
+                "⚠️ DỰ BÁO VƯỢT NGÂN SÁCH: ${String.format("%,.0f", totalPred - budgetTotal)}đ"
+            } else if (budgetTotal > 0) {
+                "✅ Dự báo nằm trong hạn mức an toàn."
+            } else {
+                "ℹ️ Chưa thiết lập hạn mức (Budget) tháng này."
+            }
+
+            // 5. Post kết quả
+            _predictionData.postValue(
+                PredictionResult(
+                    totalPredicted = totalPred,
+                    electricPredicted = predElectric,
+                    waterPredicted = predWater,
+                    budgetTotal = budgetTotal,
+                    historyElectric = electricHistory,
+                    historyWater = waterHistory,
+                    message = msg
+                )
             )
         }
     }
-}
 
-// Factory
-class PredictionViewModelFactory(private val repo: BudgetRepository) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(PredictionViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return PredictionViewModel(repo) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
+    // Hàm lấy danh sách tổng tiền 6 tháng gần nhất
+    private fun getHistoryData(allBills: List<HoaDonEntity>, type: String): List<Double> {
+        return allBills
+            .filter { it.loai == type }
+            .sortedWith(compareBy({ it.nam }, { it.thang })) // Sort cũ -> mới
+            .takeLast(6) // Lấy 6 tháng cuối
+            .map { it.tongTien.toDouble() }
+    }
+
+    // Thuật toán trung bình động (Moving Average)
+    private fun calculateMovingAverage(history: List<Double>): Double {
+        if (history.isEmpty()) return 0.0
+        val last3Months = history.takeLast(3)
+        return last3Months.average()
     }
 }

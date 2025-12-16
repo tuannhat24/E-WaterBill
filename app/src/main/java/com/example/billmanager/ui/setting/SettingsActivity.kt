@@ -1,77 +1,107 @@
 package com.example.billmanager.ui.settings
 
+import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.LinearLayout
+import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.lifecycleScope
 import com.example.billmanager.R
 import com.example.billmanager.data.local.database.AppDatabase
+import com.example.billmanager.data.local.datastore.AppDataStore
+import com.example.billmanager.ui.location.LocationActivity
 import com.example.billmanager.ui.setting.NotificationSetting
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class SettingsActivity : AppCompatActivity() {
 
-    private lateinit var appDataStore: AppDatabase
+    private lateinit var appDataStore: AppDataStore
 
     // Controls
-    private lateinit var btnNavNotification: LinearLayout
-    private lateinit var btnNavBudget: LinearLayout
-    private lateinit var btnClearData: Button
-    private lateinit var tvVersion: TextView
     private lateinit var tvTitle: TextView
     private lateinit var btnBack: ImageButton
+    private lateinit var btnNavNotification: LinearLayout
+    private lateinit var btnNavLocationBackup: LinearLayout
+    private lateinit var switchDarkMode: Switch
+    private lateinit var btnClearData: Button
+    private lateinit var tvVersion: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
 
-        appDataStore = AppDatabase.getDatabase(this)
+        appDataStore = AppDataStore(this)
 
         setControl()
+        loadSettings()
         setEvent()
     }
 
     private fun setControl() {
+        tvTitle = findViewById(R.id.tvTitle)
+        if (::tvTitle.isInitialized) tvTitle.text = "Cài đặt"
+        btnBack = findViewById(R.id.btnBack)
+
         btnNavNotification = findViewById(R.id.btnNavNotificationSettings)
-        btnNavBudget = findViewById(R.id.btnNavBudgetSettings)
+        btnNavLocationBackup = findViewById(R.id.btnNavLocationBackup)
+        switchDarkMode = findViewById(R.id.switchDarkMode)
         btnClearData = findViewById(R.id.btnClearData)
         tvVersion = findViewById(R.id.tvVersion)
-        tvTitle = findViewById(R.id.tvTitle)
-        tvTitle.text = "Cài đặt"
-        btnBack = findViewById(R.id.btnBack)
+    }
+
+    private fun loadSettings() {
+        lifecycleScope.launch {
+            // Load trạng thái Dark Mode từ DataStore
+            val isDark = appDataStore.darkModeFlow.first()
+            switchDarkMode.isChecked = isDark
+        }
     }
 
     private fun setEvent() {
-        btnBack.setOnClickListener {
-            finish()
-        }
+        btnBack.setOnClickListener { finish() }
 
-        // Chuyển sang màn hình NotificationSetting
         btnNavNotification.setOnClickListener {
-            val intent = Intent(this, NotificationSetting::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, NotificationSetting::class.java))
         }
 
-        // Chuyển sang màn hình Budget Settings
-        btnNavBudget.setOnClickListener {
-            // Ví dụ: Mở lại BudgetActivity hoặc 1 màn hình cài đặt budget riêng
-            // val intent = Intent(this, BudgetSettingActivity::class.java)
-            // startActivity(intent)
-            Toast.makeText(this, "Tính năng đang cập nhật", Toast.LENGTH_SHORT).show()
+        btnNavLocationBackup.setOnClickListener {
+            startActivity(Intent(this, LocationActivity::class.java))
         }
 
-        // Xóa dữ liệu (Reset)
-        btnClearData.setOnClickListener {
+        switchDarkMode.setOnCheckedChangeListener { _, isChecked ->
             lifecycleScope.launch {
-                // TODO: Gọi lệnh xóa database của Notification và Budget
-                // database.clearAllTables()
-                Toast.makeText(this@SettingsActivity, "Đã reset dữ liệu (demo)", Toast.LENGTH_SHORT).show()
+                // Lưu vào DataStore
+                appDataStore.setDarkMode(isChecked)
+
+                // Áp dụng chế độ ngay lập tức
+                if (isChecked) {
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+                } else {
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+                }
             }
+        }
+
+        btnClearData.setOnClickListener {
+            AlertDialog.Builder(this)
+                .setTitle("Cảnh báo")
+                .setMessage("Bạn có chắc muốn xóa TOÀN BỘ dữ liệu không? Hành động này không thể hoàn tác.")
+                .setPositiveButton("Xóa hết") { _, _ ->
+                    val db = AppDatabase.getInstance(this)
+                    db.clearAllTables() // Xóa sạch dữ liệu Room
+                    Toast.makeText(this, "Đã xóa dữ liệu! Hãy khởi động lại App.", Toast.LENGTH_LONG).show()
+                    // Tùy chọn: Thoát app hoặc restart
+                    finishAffinity()
+                }
+                .setNegativeButton("Hủy", null)
+                .show()
         }
     }
 }

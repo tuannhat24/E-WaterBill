@@ -9,9 +9,12 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.cardview.widget.CardView
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.example.billmanager.data.local.database.AppDatabase
+import com.example.billmanager.data.local.datastore.AppDataStore
 import com.example.billmanager.ui.auth.login.LoginActivity
 import com.example.billmanager.ui.auth.profile.ProfileActivity
 import com.example.billmanager.ui.budget.BudgetActivity
@@ -24,14 +27,14 @@ import com.example.billmanager.ui.prediction.PredictionActivity
 import com.example.billmanager.ui.settings.SettingsActivity
 import com.example.billmanager.utils.ReminderReceiver
 import com.example.billmanager.utils.UserSession
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var notificationViewModel: NotificationViewModel
     private lateinit var userSession: UserSession
     private lateinit var db: AppDatabase
-
-    // Controls
     private lateinit var imgAvatar: ImageView
     private lateinit var tvUserName: TextView
     private lateinit var tvUserDesc: TextView
@@ -51,6 +54,17 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val dataStore = AppDataStore(this)
+        // Chạy coroutine trên lifecycleScope của Activity để lấy setting
+        lifecycleScope.launch {
+            val isDark = dataStore.darkModeFlow.first()
+            val mode = if (isDark) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
+
+            // Chỉ set nếu chế độ hiện tại khác với chế độ đã lưu (để tránh nháy màn hình)
+            if (AppCompatDelegate.getDefaultNightMode() != mode) {
+                AppCompatDelegate.setDefaultNightMode(mode)
+            }
+        }
         setContentView(R.layout.activity_main)
 
         // 1. Khởi tạo DB & Session

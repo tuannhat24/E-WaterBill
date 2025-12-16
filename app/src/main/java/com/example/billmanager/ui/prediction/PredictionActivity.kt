@@ -1,22 +1,22 @@
 package com.example.billmanager.ui.prediction
 
+import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import com.example.billmanager.R
-import com.example.billmanager.data.local.database.AppDatabase
-import com.example.billmanager.data.repository.BudgetRepository
+import com.example.billmanager.ui.budget.BudgetActivity
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
+import java.util.ArrayList
 
 class PredictionActivity : AppCompatActivity() {
 
@@ -24,117 +24,122 @@ class PredictionActivity : AppCompatActivity() {
 
     // Controls
     private lateinit var lineChart: LineChart
+    private lateinit var tvTitle: TextView
+    private lateinit var btnBack: ImageButton
     private lateinit var tvPredictedAmount: TextView
-    private lateinit var tvConfidence: TextView
     private lateinit var tvElectricPred: TextView
     private lateinit var tvWaterPred: TextView
     private lateinit var tvComparisonMessage: TextView
-    private lateinit var tvSuggestion: TextView
-    private lateinit var btnAdjust: Button
-    private lateinit var tvTitle: TextView
-    private lateinit var btnBack: ImageButton
+    private lateinit var btnAdjustBudget: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_prediction)
 
         // Init ViewModel
-        val db = AppDatabase.getDatabase(this)
-        val repo = BudgetRepository(db.budgetDao())
-        val factory = PredictionViewModelFactory(repo)
-        viewModel = ViewModelProvider(this, factory)[PredictionViewModel::class.java]
+        viewModel = ViewModelProvider(this)[PredictionViewModel::class.java]
 
         setControl()
-        setEvent()
+        setupChartConfig()
 
-        // Kích hoạt tính toán
+        // Gọi hàm tính toán
         viewModel.calculatePrediction()
 
+        setEvent()
         observeData()
     }
 
     private fun setControl() {
+        tvTitle = findViewById(R.id.tvTitle)
+        tvTitle.text = "Dự Đoán Chi Tiêu Tháng Tới"
+
+        btnBack = findViewById(R.id.btnBack)
+
         lineChart = findViewById(R.id.lineChartPrediction)
         tvPredictedAmount = findViewById(R.id.tvPredictedAmount)
-        tvConfidence = findViewById(R.id.tvConfidence)
         tvElectricPred = findViewById(R.id.tvElectricPred)
         tvWaterPred = findViewById(R.id.tvWaterPred)
         tvComparisonMessage = findViewById(R.id.tvComparisonMessage)
-        tvSuggestion = findViewById(R.id.tvSuggestion)
-        btnAdjust = findViewById(R.id.btnAdjustBudget)
-        tvTitle = findViewById(R.id.tvTitle)
-        tvTitle.text = "🔮 Dự Đoán Chi Tiêu Tháng Tới"
-        btnBack = findViewById(R.id.btnBack)
+        btnAdjustBudget = findViewById(R.id.btnAdjustBudget)
     }
 
     private fun setEvent() {
-        btnAdjust.setOnClickListener {
-            Toast.makeText(this, "Điều chỉnh Hạn mức ngay", Toast.LENGTH_SHORT).show()
-            finish()
-        }
+        btnBack.setOnClickListener { finish() }
 
-        btnBack.setOnClickListener {
+        btnAdjustBudget.setOnClickListener {
+            startActivity(Intent(this, BudgetActivity::class.java))
             finish()
         }
     }
 
     private fun observeData() {
         viewModel.predictionData.observe(this) { result ->
-            // 1. Hiển thị số tiền
-            tvPredictedAmount.text = "${String.format("%,.0f", result.totalAmount)} đ"
-            tvConfidence.text = "Độ tin cậy: ${result.confidence}"
-            tvElectricPred.text = "⚡ Điện: ${String.format("%,.0f", result.electricAmount)} đ"
-            tvWaterPred.text = "💧 Nước: ${String.format("%,.0f", result.waterAmount)} đ"
+            // 1. Hiển thị text
+            tvPredictedAmount.text = "${String.format("%,.0f", result.totalPredicted)} đ"
+            tvElectricPred.text = "⚡ Điện: ${String.format("%,.0f", result.electricPredicted)} đ"
+            tvWaterPred.text = "💧 Nước: ${String.format("%,.0f", result.waterPredicted)} đ"
 
-            // 2. So sánh với Budget
-            val diff = result.totalAmount - result.budgetTotal
-            if (diff > 0) {
-                tvComparisonMessage.text = "⚠️ DỰ BÁO VƯỢT HẠN MỨC: ${String.format("%,.0f", diff)} đ"
+            tvComparisonMessage.text = result.message
+            if (result.message.contains("VƯỢT")) {
                 tvComparisonMessage.setTextColor(Color.RED)
-                tvSuggestion.text = "Gợi ý: Cần cắt giảm ngay hoặc tăng hạn mức ngân sách!"
             } else {
-                tvComparisonMessage.text = "✅ Dự báo nằm trong hạn mức"
                 tvComparisonMessage.setTextColor(Color.parseColor("#4CAF50"))
-                tvSuggestion.text = "Tuyệt vời! Hãy duy trì mức sử dụng này."
             }
 
-            // 3. Vẽ biểu đồ
-            setupChart(result.historyElectric, result.electricAmount)
+            // 2. Vẽ biểu đồ (Vẽ đường tiền Điện làm mẫu chính)
+            updateChart(result.historyElectric, result.electricPredicted)
         }
     }
 
-    private fun setupChart(history: List<Double>, prediction: Double) {
-        val entries = ArrayList<Entry>()
+    private fun setupChartConfig() {
+        lineChart.description.isEnabled = false
+        lineChart.setTouchEnabled(true)
+        lineChart.isDragEnabled = true
+        lineChart.setScaleEnabled(true)
+        lineChart.setPinchZoom(true)
 
-        // Thêm dữ liệu lịch sử
+        val xAxis = lineChart.xAxis
+        xAxis.position = XAxis.XAxisPosition.BOTTOM
+        xAxis.setDrawGridLines(false)
+        xAxis.granularity = 1f
+
+        lineChart.axisRight.isEnabled = false
+    }
+
+    private fun updateChart(history: List<Double>, prediction: Double) {
+        val entries = ArrayList<Entry>()
+        val labels = ArrayList<String>()
+
+        // 1. Dữ liệu Lịch sử
         history.forEachIndexed { index, value ->
             entries.add(Entry(index.toFloat(), value.toFloat()))
+            labels.add("T${index + 1}") // Nhãn giả lập T1, T2... (Cần logic lấy tháng thật nếu muốn xịn hơn)
         }
 
-        // Thêm điểm dự đoán (tháng tiếp theo)
-        val nextMonthIndex = history.size.toFloat()
-        entries.add(Entry(nextMonthIndex, prediction.toFloat()))
+        // 2. Dữ liệu Dự báo (Điểm cuối cùng)
+        val nextIndex = history.size
+        entries.add(Entry(nextIndex.toFloat(), prediction.toFloat()))
+        labels.add("Dự báo")
 
-        val dataSet = LineDataSet(entries, "Xu hướng Tiền Điện")
+        // Tạo Dataset
+        val dataSet = LineDataSet(entries, "Xu hướng Điện (VNĐ)")
         dataSet.color = Color.BLUE
-        dataSet.valueTextSize = 12f
+        dataSet.valueTextColor = Color.BLACK
+        dataSet.valueTextSize = 10f
         dataSet.lineWidth = 2f
         dataSet.circleRadius = 4f
+        dataSet.setCircleColor(Color.BLUE)
 
-        // Làm nét đứt cho đoạn dự đoán (Optional - logic nâng cao: vẽ 2 đường, 1 liền, 1 đứt)
-        // Ở đây vẽ đơn giản 1 đường liền trước.
+        // Highlight điểm dự báo (Optional)
+        // dataSet.circleColors = ... (Logic nâng cao để đổi màu điểm cuối)
 
         val lineData = LineData(dataSet)
         lineChart.data = lineData
 
-        // Format trục X
-        val months = arrayOf("T1", "T2", "T3", "T4", "T5", "T6(Dự báo)") // Fake label
-        lineChart.xAxis.valueFormatter = IndexAxisValueFormatter(months)
-        lineChart.xAxis.position = XAxis.XAxisPosition.BOTTOM
-        lineChart.xAxis.granularity = 1f
+        // Cập nhật nhãn trục X
+        lineChart.xAxis.valueFormatter = IndexAxisValueFormatter(labels)
 
-        lineChart.description.isEnabled = false
         lineChart.animateX(1000)
-        lineChart.invalidate()
+        lineChart.invalidate() // Refresh
     }
 }

@@ -10,9 +10,13 @@ class BudgetRepository(private val budgetDao: BudgetDao) {
         return budgetDao.getBudgetByMonth(month, year, type)
     }
 
+    fun getBudgetSync(month: Int, year: Int, type: Int): Budget? {
+        return budgetDao.getBudgetSync(month, year, type)
+    }
+
     suspend fun saveBudget(budget: Budget) {
         //Xóa cái cũ (tránh trùng lặp ID)
         budgetDao.deleteBudgetByMonth(budget.month, budget.year, budget.type)
-        budgetDao.insertOrUpdateBudget(budget)
+        budgetDao.insertBudget(budget)
     }
 }
