@@ -20,7 +20,7 @@
 
             <ImageView
                 android:id="@+id/imgAvatar"
-                android:src="@mipmap/ic_launcher_round"
+                android:src="@drawable/login"
                 android:layout_width="50dp"
                 android:layout_height="50dp"/>
 
@@ -31,7 +31,8 @@
                 android:layout_marginStart="12dp"
                 android:orientation="vertical">
                 <TextView
-                    android:text="Xin chào, Tuấn!"
+                    android:id="@+id/tvWelcome"
+                    android:text="Xin chào"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     android:textColor="#333333"

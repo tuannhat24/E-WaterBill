@@ -4,6 +4,7 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -13,6 +14,7 @@ import com.example.billmanager.data.local.database.UsersDB
 import com.example.billmanager.data.local.entity.User
 import com.example.billmanager.ui.auth.login.LoginActivity
 import com.example.billmanager.utils.UserSession
+import org.w3c.dom.Text
 
 class ProfileActivity : AppCompatActivity() {
     lateinit var txtProfileName: TextView
@@ -22,6 +24,8 @@ class ProfileActivity : AppCompatActivity() {
     lateinit var edtPhoneNumber: EditText
     lateinit var btnEdit: LinearLayout
     lateinit var btnDeleteAccount: LinearLayout
+    lateinit var tvTitle: TextView
+    lateinit var btnBack: ImageButton
     lateinit var btnLogout: LinearLayout
     lateinit var db: UsersDB
     var isEditing = false
@@ -41,6 +45,9 @@ class ProfileActivity : AppCompatActivity() {
         btnEdit = findViewById<LinearLayout>(R.id.btnEdit)
         btnDeleteAccount = findViewById<LinearLayout>(R.id.btnDeleteAccount)
         btnLogout = findViewById<LinearLayout>(R.id.btnLogout)
+        tvTitle = findViewById<TextView>(R.id.tvTitle)
+        tvTitle.text = "Thông tin cá nhân"
+        btnBack = findViewById<ImageButton>(R.id.btnBack)
     }
 
     private fun setEvent() {
@@ -48,11 +55,12 @@ class ProfileActivity : AppCompatActivity() {
         val session = UserSession(this)
         val email = session.getUserEmail()
         //lấy thông tin user theo email
-
         val currentUser = db.userDao().findByEmail(email)
         refreshUserUI(currentUser!!)
 
-
+        btnBack.setOnClickListener {
+            finish()
+        }
         //Chỉnh sửa thông tin
         btnEdit.setOnClickListener {
             if (!isEditing) {

@@ -7,25 +7,18 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@color/white"
-    tools:context=".MainProfile">
+    tools:context=".ui.auth.profile.ProfileActivity">
+    <include
+        android:id="@+id/layoutHeader"
+        layout="@layout/layout_header" />
 
     <!-- ===================== HEADER ===================== -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="260dp"
+        android:layout_height="200dp"
         android:gravity="center"
         android:orientation="vertical"
-        android:paddingTop="30dp"
         android:background="@drawable/profile_top_backgroud">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Thông tin tài khoản"
-            android:textColor="#FFFFFF"
-            android:textSize="25sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="15dp"/>
 
         <!-- Avatar tròn -->
         <ImageView
@@ -43,7 +36,7 @@
             android:layout_height="wrap_content"
             android:text="User Name"
             android:textColor="#FFFFFF"
-            android:textSize="18sp"
+            android:textSize="25sp"
             android:textStyle="bold" />
 
     </LinearLayout>

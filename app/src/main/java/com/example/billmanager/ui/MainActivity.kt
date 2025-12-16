@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.lifecycle.ViewModelProvider
+import com.example.billmanager.data.local.database.UsersDB
 import com.example.billmanager.ui.auth.profile.ProfileActivity
 import com.example.billmanager.ui.budget.BudgetActivity
 import com.example.billmanager.ui.notification.NotificationsActivity
@@ -17,11 +18,14 @@ import com.example.billmanager.ui.notification.NotificationViewModel
 import com.example.billmanager.ui.prediction.PredictionActivity
 import com.example.billmanager.ui.settings.SettingsActivity
 import com.example.billmanager.utils.ReminderReceiver
+import com.example.billmanager.utils.UserSession
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var notificationViewModel: NotificationViewModel
     private lateinit var tvUnreadCount: TextView
+    private lateinit var tvWelcome: TextView
+    lateinit var db: UsersDB
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,9 +40,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun setControl() {
         tvUnreadCount = findViewById(R.id.tvUnreadCount)
+        tvWelcome = findViewById(R.id.tvWelcome)
     }
 
     private fun setEvent() {
+        db = UsersDB.getInstance(this)
+        val session = UserSession(this)
+        val email = session.getUserEmail()
+        //lấy thông tin user theo email
+        val currentUser = db.userDao().findByEmail(email)
+        tvWelcome.text = "Chào mừng ${currentUser?.fullName}"
         // --- MODULE 1: PROFILE ---
         findViewById<View>(R.id.imgAvatar).setOnClickListener {
             startActivity(Intent(this, ProfileActivity::class.java))
