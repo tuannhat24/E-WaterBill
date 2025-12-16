@@ -1,9 +1,11 @@
 package com.example.billmanager.data.local.entity
 
+import android.os.Parcelable
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import java.io.Serializable
+import kotlinx.parcelize.Parcelize
 
+@Parcelize
 @Entity(tableName = "hoadon")
 data class HoaDonEntity(
     @PrimaryKey(autoGenerate = true)
@@ -20,4 +22,4 @@ data class HoaDonEntity(
     var trangThai: String,
     val ghiChu: String = "",
     val phuongThucThanhToan: String = ""
-) : Serializable
+) : Parcelable

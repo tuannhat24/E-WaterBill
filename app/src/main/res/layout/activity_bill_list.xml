@@ -6,6 +6,7 @@
     android:orientation="vertical"
     android:background="#F5F5F5">
 
+    <!-- HEADER -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -41,6 +42,7 @@
             android:layout_height="48dp"/>
     </LinearLayout>
 
+    <!-- CHIPS LỌC -->
     <HorizontalScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -87,9 +89,63 @@
                 android:layout_marginEnd="8dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipPaid"
+                android:text="Đã thanh toán"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:textColor="#4CAF50"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
         </LinearLayout>
     </HorizontalScrollView>
 
+    <!-- TÌM KIẾM THÁNG/NĂM - NHỎ GỌN -->
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="8dp"
+        android:gravity="center_vertical"
+        android:weightSum="3">
+
+        <EditText
+            android:id="@+id/edtThang"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="40dp"
+            android:hint="Tháng"
+            android:background="@drawable/bg_edittext"
+            android:padding="8dp"
+            android:inputType="number"
+            android:textSize="14sp"/>
+
+        <EditText
+            android:id="@+id/edtNam"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="40dp"
+            android:layout_marginStart="8dp"
+            android:hint="Năm"
+            android:background="@drawable/bg_edittext"
+            android:padding="8dp"
+            android:inputType="number"
+            android:textSize="14sp"/>
+
+        <Button
+            android:id="@+id/btnSearch"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="40dp"
+            android:text="Tìm"
+            android:textSize="14sp"
+            android:layout_marginStart="8dp"
+            android:backgroundTint="#2196F3"
+            android:textColor="#FFFFFF"/>
+    </LinearLayout>
+
+    <!-- DANH SÁCH HÓA ĐƠN -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvHoaDon"
         android:layout_width="match_parent"
@@ -98,6 +154,7 @@
         android:padding="8dp"
         android:clipToPadding="false"/>
 
+    <!-- EMPTY VIEW -->
     <LinearLayout
         android:id="@+id/layoutEmpty"
         android:layout_width="match_parent"
