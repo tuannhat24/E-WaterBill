@@ -1,13 +1,8 @@
 package com.example.billmanager.ui.history_bill
 
-import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.widget.Button
 import android.widget.ImageButton
-import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -15,11 +10,9 @@ import com.example.billmanager.R
 import com.example.billmanager.data.local.database.AppDatabase
 import com.example.billmanager.data.local.entity.HoaDonEntity
 import com.example.billmanager.data.repository.HoaDonRepository
-import com.example.billmanager.ui.history_bill.HoaDonAdapter
 import com.example.billmanager.ui.input.InputBillActivity
 import com.google.android.material.chip.Chip
-import java.text.NumberFormat
-import java.util.Locale
+
 
 class BillListActivity : AppCompatActivity() {
 
@@ -27,6 +20,7 @@ class BillListActivity : AppCompatActivity() {
     private lateinit var adapter: HoaDonAdapter
     private lateinit var btnAdd: ImageButton
     private lateinit var btnBack: ImageButton
+    private lateinit var btnAnalytics: ImageButton
 
     // Filter Chips
     private lateinit var chipAll: Chip
@@ -35,13 +29,12 @@ class BillListActivity : AppCompatActivity() {
     private lateinit var chipUnpaid: Chip
 
     private lateinit var repository: HoaDonRepository
-    private var originalList = listOf<HoaDonEntity>() // Danh sách gốc
+    private var originalList = listOf<HoaDonEntity>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_bill_list)
 
-        // Init Repo
         val db = AppDatabase.getInstance(this)
         repository = HoaDonRepository(db.hoaDonDao())
 
@@ -51,13 +44,14 @@ class BillListActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        loadData() // Load lại dữ liệu mỗi khi quay lại màn hình
+        loadData()
     }
 
     private fun setControl() {
         rvHoaDon = findViewById(R.id.rvHoaDon)
         btnAdd = findViewById(R.id.btnAdd)
         btnBack = findViewById(R.id.btnBack)
+        btnAnalytics = findViewById(R.id.btnAnalytics)
 
         chipAll = findViewById(R.id.chipAll)
         chipDien = findViewById(R.id.chipDien)
@@ -73,12 +67,14 @@ class BillListActivity : AppCompatActivity() {
     }
 
     private fun setEvent() {
-        // Nút Thêm mới
         btnAdd.setOnClickListener {
             startActivity(Intent(this, InputBillActivity::class.java))
         }
 
-        // Nút Quay lại
+        btnAnalytics.setOnClickListener {
+            startActivity(Intent(this, AnalyticsActivity::class.java))
+        }
+
         btnBack.setOnClickListener { finish() }
 
         // Sự kiện bộ lọc (Filter)
@@ -108,54 +104,9 @@ class BillListActivity : AppCompatActivity() {
         adapter.updateList(filtered)
     }
 
-    // --- LOGIC HIỂN THỊ DIALOG CHI TIẾT ---
     private fun showDetailDialog(hd: HoaDonEntity) {
-        val view = LayoutInflater.from(this).inflate(R.layout.dialog_bill_detail, null)
-        val dialog = AlertDialog.Builder(this).setView(view).create()
-
-        // 1. Ánh xạ View trong Dialog
-        val tvLoai = view.findViewById<TextView>(R.id.tvLoai)
-        val tvNgayGio = view.findViewById<TextView>(R.id.tvNgayGio)
-        val tvChiSo = view.findViewById<TextView>(R.id.tvChiSo)
-        val tvDonVi = view.findViewById<TextView>(R.id.tvDonVi)
-        val tvTongTien = view.findViewById<TextView>(R.id.tvTongTien)
-        val tvTrangThai = view.findViewById<TextView>(R.id.tvTrangThai)
-
-        val btnDong = view.findViewById<Button>(R.id.btnDong)
-        val btnXoa = view.findViewById<Button>(R.id.btnXoa)
-        val btnSua = view.findViewById<Button>(R.id.btnSua)
-
-        // 2. Gán dữ liệu
-        tvLoai.text = "Hóa đơn tiền ${hd.loai} - T${hd.thang}/${hd.nam}"
-        tvNgayGio.text = "Ngày tạo: ${hd.gio} ${hd.ngay}"
-        tvChiSo.text = "Chỉ số: ${hd.chiSoDau} ➝ ${hd.chiSoCuoi}"
-
-        val donVi = if (hd.loai == "Điện") "kWh" else "m³"
-        tvDonVi.text = "Tiêu thụ: ${hd.soLuong} $donVi"
-
-        val formatVND = NumberFormat.getCurrencyInstance(Locale("vi", "VN"))
-        tvTongTien.text = "Tổng tiền: ${formatVND.format(hd.tongTien)}"
-        tvTrangThai.text = hd.trangThai
-
-        // 3. Xử lý sự kiện nút trong Dialog
-        btnDong.setOnClickListener { dialog.dismiss() }
-
-        btnXoa.setOnClickListener {
-            // Xóa database
-            repository.delete(hd)
-            Toast.makeText(this, "Đã xóa hóa đơn", Toast.LENGTH_SHORT).show()
-            loadData() // Load lại list
-            dialog.dismiss()
-        }
-
-        btnSua.setOnClickListener {
-            Toast.makeText(this, "Chức năng Sửa đang cập nhật", Toast.LENGTH_SHORT).show()
-            // TODO: Mở InputBillActivity và truyền dữ liệu cũ sang để sửa
-            // val intent = Intent(this, InputBillActivity::class.java)
-            // intent.putExtra("BILL_ID", hd.id) ...
-            // startActivity(intent)
-        }
-
-        dialog.show()
+        val intent = Intent(this, BillDetailActivity::class.java)
+        intent.putExtra("BILL_DATA", hd)
+        startActivity(intent)
     }
 }

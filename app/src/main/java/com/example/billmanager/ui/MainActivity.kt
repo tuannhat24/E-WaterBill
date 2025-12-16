@@ -15,8 +15,8 @@ import com.example.billmanager.data.local.database.AppDatabase
 import com.example.billmanager.ui.auth.login.LoginActivity
 import com.example.billmanager.ui.auth.profile.ProfileActivity
 import com.example.billmanager.ui.budget.BudgetActivity
-import com.example.billmanager.ui.history_bill.BillListActivity // Mod 2: List
-import com.example.billmanager.ui.input.InputBillActivity       // Mod 2: Input
+import com.example.billmanager.ui.history_bill.BillListActivity // Mod 3: Danh sách & Phân tích
+import com.example.billmanager.ui.input.InputBillActivity       // Mod 2: Nhập liệu
 import com.example.billmanager.ui.notification.NotificationsActivity
 import com.example.billmanager.ui.notification.NotificationViewModel
 import com.example.billmanager.ui.prediction.PredictionActivity
@@ -44,18 +44,20 @@ class MainActivity : AppCompatActivity() {
     private lateinit var cardNotifications: CardView
     private lateinit var cardPrediction: CardView
     private lateinit var cardLocation: CardView
+
+    // Test
     private lateinit var btnTestNotify: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Init Core
+        // 1. Khởi tạo DB & Session
         db = AppDatabase.getInstance(this)
         userSession = UserSession(this)
         notificationViewModel = ViewModelProvider(this)[NotificationViewModel::class.java]
 
-        // Check Login (Module 1)
+        // 2. Kiểm tra Login (Module 1)
         if (!userSession.isLoggedIn()) {
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
@@ -70,7 +72,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Load lại profile mỗi khi quay lại
+        // Load lại dữ liệu mỗi khi quay lại màn hình chính
         if (userSession.isLoggedIn()) {
             loadUserProfile()
         }
@@ -92,9 +94,9 @@ class MainActivity : AppCompatActivity() {
         btnTestNotify = findViewById(R.id.btnTestNotify)
     }
 
-    // Load dữ liệu từ Module 1 hiển thị lên Dashboard
     private fun loadUserProfile() {
         val email = userSession.getUserEmail()
+        // Lưu ý: findByEmail chạy trên Main Thread vì trong AppDatabase đã có allowMainThreadQueries()
         val user = db.userDao().findByEmail(email)
 
         if (user != null) {
@@ -102,6 +104,7 @@ class MainActivity : AppCompatActivity() {
             tvUserDesc.text = user.email
         } else {
             tvUserName.text = "Xin chào!"
+            tvUserDesc.text = email ?: "Khách"
         }
     }
 
@@ -111,20 +114,22 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, ProfileActivity::class.java))
         }
 
-        // --- MODULE 2: BILL MANAGEMENT ---
+        // --- MODULE 2: NHẬP HÓA ĐƠN ---
         cardInputBill.setOnClickListener {
             startActivity(Intent(this, InputBillActivity::class.java))
         }
+
+        // --- MODULE 3: DANH SÁCH & PHÂN TÍCH ---
         cardBillList.setOnClickListener {
             startActivity(Intent(this, BillListActivity::class.java))
         }
 
-        // --- MODULE 5: LOCATION ---
+        // --- MODULE 5: ĐỊA ĐIỂM (Chưa làm) ---
         cardLocation.setOnClickListener {
             Toast.makeText(this, "Module 5: Địa điểm & Backup (Đang phát triển)", Toast.LENGTH_SHORT).show()
         }
 
-        // --- MODULE 4: NOTIFICATION & BUDGET ---
+        // --- MODULE 4: NOTIFICATION & BUDGET & PREDICTION ---
         btnOpenSettings.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
@@ -138,7 +143,7 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, PredictionActivity::class.java))
         }
 
-        // Developer Test
+        // Developer Test Button
         btnTestNotify.setOnClickListener {
             val intent = Intent(this, ReminderReceiver::class.java)
             sendBroadcast(intent)
