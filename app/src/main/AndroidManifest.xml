@@ -35,8 +35,10 @@
         <activity android:name=".ui.prediction.PredictionActivity" />
         <activity android:name=".ui.input.InputBillActivity" />
         <activity android:name=".ui.history_bill.BillListActivity" />
-        <activity android:name=".ui.history_bill.BillDetailActivity"/>
-        <activity android:name=".ui.history_bill.AnalyticsActivity"/>
+        <activity android:name=".ui.history_bill.BillDetailActivity" />
+        <activity android:name=".ui.history_bill.AnalyticsActivity" />
+        <activity android:name=".ui.location.LocationActivity" />
+
     </application>
 
 </manifest>

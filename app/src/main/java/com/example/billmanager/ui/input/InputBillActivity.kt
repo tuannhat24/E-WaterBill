@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.billmanager.R
 import com.example.billmanager.data.local.database.AppDatabase
 import com.example.billmanager.data.local.entity.HoaDonEntity
+import com.example.billmanager.data.local.entity.LocationEntity
 import com.example.billmanager.data.local.entity.NotificationEntity
 import com.example.billmanager.data.model.NotificationType
 import com.example.billmanager.data.repository.HoaDonRepository
@@ -30,6 +31,8 @@ class InputBillActivity : AppCompatActivity() {
     private lateinit var tvTitle: TextView
     private lateinit var btnLuu: Button
     private lateinit var btnBack: ImageButton
+    private lateinit var spnLocation: Spinner
+    private var listLocation: List<LocationEntity> = emptyList()
 
     private lateinit var repository: HoaDonRepository
     private var billToEdit: HoaDonEntity? = null
@@ -43,11 +46,13 @@ class InputBillActivity : AppCompatActivity() {
 
         setControl()
 
-        // kiểm tra có phải đang sửa ko?
+        loadLocationSpinner()
+
+        // Kiểm tra xem có phải đang sửa hóa đơn không
         if (intent.hasExtra("BILL_EDIT")) {
             billToEdit = intent.getSerializableExtra("BILL_EDIT") as HoaDonEntity
             fillDataToEdit(billToEdit!!)
-            btnLuu.text = "Cập nhật Hóa Đơn" // Đổi tên nút
+            btnLuu.text = "Cập nhật Hóa Đơn"
         }
 
         setEvent()
@@ -66,6 +71,31 @@ class InputBillActivity : AppCompatActivity() {
         btnBack = findViewById(R.id.btnBack)
         tvTitle = findViewById(R.id.tvTitle)
         tvTitle.text = "Thêm Hóa Đơn"
+        spnLocation = findViewById(R.id.spnLocation)
+    }
+
+    private fun loadLocationSpinner() {
+        // Lấy danh sách địa điểm từ DB
+        listLocation = AppDatabase.getInstance(this).locationDao().getAll()
+
+        // Nếu chưa có địa điểm nào, tạo list ảo để tránh crash (dù Module 5 thường đã tạo default)
+        val locationNames = if (listLocation.isNotEmpty()) {
+            listLocation.map { it.name }
+        } else {
+            listOf("Mặc định")
+        }
+
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, locationNames)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spnLocation.adapter = adapter
+
+        // Tự động chọn địa điểm đang active (isSelected = true)
+        if (listLocation.isNotEmpty()) {
+            val activeIndex = listLocation.indexOfFirst { it.isSelected }
+            if (activeIndex >= 0) {
+                spnLocation.setSelection(activeIndex)
+            }
+        }
     }
 
     private fun fillDataToEdit(bill: HoaDonEntity) {
@@ -76,9 +106,11 @@ class InputBillActivity : AppCompatActivity() {
 
         if (bill.loai == "Điện") rbDien.isChecked = true else rbNuoc.isChecked = true
 
-        // Khóa không cho sửa Loại, Tháng, Năm (nếu muốn logic chặt chẽ)
-        // edtThang.isEnabled = false
-        // edtNam.isEnabled = false
+        // Chọn lại đúng địa điểm của hóa đơn đang sửa
+        if (listLocation.isNotEmpty()) {
+            val index = listLocation.indexOfFirst { it.id == bill.locationId }
+            if (index >= 0) spnLocation.setSelection(index)
+        }
     }
 
     private fun setEvent() {
@@ -123,9 +155,16 @@ class InputBillActivity : AppCompatActivity() {
         val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
         val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
-        // Tạo object (Nếu đang sửa thì giữ nguyên ID cũ, nếu thêm mới thì ID tự tăng)
+        // Lấy ID địa điểm đang chọn
+        val locationId = if (listLocation.isNotEmpty()) {
+            listLocation[spnLocation.selectedItemPosition].id
+        } else {
+            1 // Fallback nếu lỗi
+        }
+
+        // Tạo object
         val hoaDon = HoaDonEntity(
-            id = billToEdit?.id ?: 0, // Quan trọng: Giữ ID nếu là sửa
+            id = billToEdit?.id ?: 0,
             loai = loaiStr,
             thang = thang,
             nam = nam,
@@ -133,19 +172,18 @@ class InputBillActivity : AppCompatActivity() {
             chiSoCuoi = moi,
             soLuong = soLuong,
             tongTien = tongTien,
-            gio = billToEdit?.gio ?: timeFormat.format(currentTime), // Giữ giờ cũ nếu sửa
+            gio = billToEdit?.gio ?: timeFormat.format(currentTime),
             ngay = billToEdit?.ngay ?: dateFormat.format(currentTime),
-            trangThai = billToEdit?.trangThai ?: "Chưa thanh toán" // Giữ trạng thái cũ
+            trangThai = billToEdit?.trangThai ?: "Chưa thanh toán",
+            locationId = locationId // <--- LƯU LOCATION ID VÀO ĐÂY
         )
 
         if (billToEdit != null) {
-            // === LOGIC SỬA ===
             repository.update(hoaDon)
             Toast.makeText(this, "Đã cập nhật hóa đơn!", Toast.LENGTH_SHORT).show()
         } else {
-            // === LOGIC THÊM MỚI ===
             repository.insert(hoaDon)
-            triggerNotification(hoaDon) // Chỉ bắn thông báo khi thêm mới
+            triggerNotification(hoaDon)
             Toast.makeText(this, "Đã thêm hóa đơn mới!", Toast.LENGTH_SHORT).show()
         }
 
@@ -159,11 +197,21 @@ class InputBillActivity : AppCompatActivity() {
             val notiMsg = "T${hoaDon.thang}/${hoaDon.nam}: ${String.format("%,d", hoaDon.tongTien)}đ"
             val notiType = if (hoaDon.loai == "Điện") NotificationType.ELECTRIC else NotificationType.WATER
 
-            val newNoti = NotificationEntity(title = notiTitle, message = notiMsg, type = notiType, timestamp = System.currentTimeMillis())
+            val newNoti = NotificationEntity(
+                title = notiTitle,
+                message = notiMsg,
+                type = notiType,
+                timestamp = System.currentTimeMillis()
+            )
             db.notificationDao().insertNotification(newNoti)
 
             runOnUiThread {
-                NotificationHelper(this@InputBillActivity).showNotification(notiTitle, notiMsg, (System.currentTimeMillis() % 10000).toInt(), notiType)
+                NotificationHelper(this@InputBillActivity).showNotification(
+                    notiTitle,
+                    notiMsg,
+                    (System.currentTimeMillis() % 10000).toInt(),
+                    notiType
+                )
             }
         }
     }

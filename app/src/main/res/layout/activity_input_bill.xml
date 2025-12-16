@@ -3,8 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#F5F5F5">
+    android:background="#F5F5F5"
+    android:orientation="vertical">
 
     <!-- HEADER -->
     <include
@@ -25,154 +25,172 @@
             android:orientation="vertical">
 
             <TextView
-                android:text="Thời gian"
-                android:textStyle="bold"
-                android:textColor="#3F51B5"
-                android:layout_marginBottom="8dp"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:text="Thời gian"
+                android:textColor="#3F51B5"
+                android:textStyle="bold" />
 
             <LinearLayout
-                android:orientation="horizontal"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
 
                 <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:hint="Tháng"
                     android:layout_marginEnd="8dp"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                    android:layout_weight="1"
+                    android:hint="Tháng">
+
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/edtThang"
-                        android:inputType="number"
-                        android:text="12"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"/>
+                        android:layout_height="wrap_content"
+                        android:inputType="number"
+                        android:text="12" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:hint="Năm"
                     android:layout_marginStart="8dp"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                    android:layout_weight="1"
+                    android:hint="Năm">
+
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/edtNam"
-                        android:inputType="number"
-                        android:text="2025"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"/>
+                        android:layout_height="wrap_content"
+                        android:inputType="number"
+                        android:text="2025" />
                 </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
 
             <TextView
-                android:text="Loại dịch vụ"
-                android:textStyle="bold"
-                android:textColor="#3F51B5"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
                 android:layout_marginBottom="8dp"
+                android:text="Địa điểm sử dụng"
+                android:textColor="#3F51B5"
+                android:textStyle="bold" />
+
+            <Spinner
+                android:id="@+id/spnLocation"
+                android:layout_width="match_parent"
+                android:layout_height="48dp" />
+
+            <TextView
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="8dp"
+                android:text="Loại dịch vụ"
+                android:textColor="#3F51B5"
+                android:textStyle="bold" />
 
             <RadioGroup
                 android:id="@+id/rgLoai"
-                android:orientation="horizontal"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
 
                 <RadioButton
                     android:id="@+id/rbDien"
-                    android:text="Điện ⚡"
-                    android:checked="true"
-                    android:textSize="16sp"
-                    android:layout_weight="1"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:checked="true"
+                    android:text="Điện ⚡"
+                    android:textSize="16sp" />
 
                 <RadioButton
                     android:id="@+id/rbNuoc"
-                    android:text="Nước 💧"
-                    android:textSize="16sp"
-                    android:layout_weight="1"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Nước 💧"
+                    android:textSize="16sp" />
             </RadioGroup>
 
             <TextView
-                android:text="Chỉ số tiêu thụ"
-                android:textStyle="bold"
-                android:textColor="#3F51B5"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
                 android:layout_marginBottom="8dp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
+                android:text="Chỉ số tiêu thụ"
+                android:textColor="#3F51B5"
+                android:textStyle="bold" />
 
             <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Chỉ số Cũ"
                 android:layout_marginBottom="10dp"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                android:hint="Chỉ số Cũ">
+
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/edtChiSoCu"
-                    android:inputType="number"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content"
+                    android:inputType="number" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Chỉ số Mới"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                android:hint="Chỉ số Mới">
+
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/edtChiSoMoi"
-                    android:inputType="number"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content"
+                    android:inputType="number" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="8dp"
+                android:layout_marginTop="20dp"
                 app:cardBackgroundColor="#E8F5E9"
-                app:contentPadding="16dp"
+                app:cardCornerRadius="8dp"
                 app:cardElevation="0dp"
-                android:layout_marginTop="20dp">
+                app:contentPadding="16dp">
 
                 <LinearLayout
-                    android:orientation="vertical"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
 
                     <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
                         android:text="Tạm tính:"
                         android:textColor="#4CAF50"
-                        android:textStyle="bold"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
+                        android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/tvTamTinh"
-                        android:text="0 đ"
-                        android:textSize="24sp"
-                        android:textStyle="bold"
-                        android:textColor="#2E7D32"
-                        android:layout_marginTop="4dp"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"/>
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="0 đ"
+                        android:textColor="#2E7D32"
+                        android:textSize="24sp"
+                        android:textStyle="bold" />
 
                     <TextView
-                        android:text="(*Đã bao gồm VAT và các loại phí)"
-                        android:textSize="12sp"
-                        android:textColor="#757575"
-                        android:layout_marginTop="4dp"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="(*Đã bao gồm VAT và các loại phí)"
+                        android:textColor="#757575"
+                        android:textSize="12sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -181,12 +199,12 @@
 
     <Button
         android:id="@+id/btnLuu"
-        android:text="Lưu Hóa Đơn"
-        android:backgroundTint="#2196F3"
-        android:textSize="16sp"
-        android:padding="12dp"
-        android:layout_margin="16dp"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:backgroundTint="#2196F3"
+        android:padding="12dp"
+        android:text="Lưu Hóa Đơn"
+        android:textSize="16sp" />
 
 </LinearLayout>
