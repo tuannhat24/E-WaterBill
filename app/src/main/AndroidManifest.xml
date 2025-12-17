@@ -12,7 +12,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.BillManager">
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.auth.login.LoginActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -20,6 +20,25 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".ui.auth.register.RegisterActivity" />
+        <activity android:name=".MainActivity" />
+        <activity android:name=".ui.auth.profile.ProfileActivity" />
+
+        <receiver
+            android:name=".utils.ReminderReceiver"
+            android:exported="false" />
+
+        <activity android:name=".ui.settings.SettingsActivity" />
+        <activity android:name=".ui.notification.NotificationsActivity" />
+        <activity android:name=".ui.setting.NotificationSetting" />
+        <activity android:name=".ui.budget.BudgetActivity" />
+        <activity android:name=".ui.prediction.PredictionActivity" />
+        <activity android:name=".ui.input.InputBillActivity" />
+        <activity android:name=".ui.history_bill.BillListActivity" />
+        <activity android:name=".ui.history_bill.BillDetailActivity" />
+        <activity android:name=".ui.history_bill.AnalyticsActivity" />
+        <activity android:name=".ui.location.LocationActivity" />
+
     </application>
 
 </manifest>

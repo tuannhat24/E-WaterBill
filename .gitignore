@@ -1,15 +1,29 @@
-*.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+# Build
+/build/
+/app/build/
+/.gradle/
+/captures/
+
+# Local configuration file (SDK path, etc)
 local.properties
+
+# IntelliJ / Android Studio
+/.idea/
+/*.iml
+
+# Logs
+*.log
+
+# MacOS
+.DS_Store
+
+# APK / AAB
+*.apk
+*.ap_
+*.aab
+
+# Kotlin
+*.kotlin_module
+
+# Google Services (API keys)
+google-services.json

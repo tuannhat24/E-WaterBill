@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Khi switch BẬT (checked) - màu xanh dương -->
+    <item android:state_checked="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#2196F3" />
+            <corners android:radius="100dp" />
+        </shape>
+    </item>
+
+    <!-- Khi switch TẮT (unchecked) - màu xám đậm -->
+    <item android:state_checked="false">
+        <shape android:shape="rectangle">
+            <solid android:color="#9E9E9E" />
+            <corners android:radius="100dp" />
+        </shape>
+    </item>
+</selector>
