@@ -20,6 +20,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".ui.auth.user_management.UserManagementMainActivity" />
         <activity android:name=".ui.auth.register.RegisterActivity" />
         <activity android:name=".MainActivity" />
         <activity android:name=".ui.auth.profile.ProfileActivity" />
@@ -38,7 +39,6 @@
         <activity android:name=".ui.history_bill.BillDetailActivity" />
         <activity android:name=".ui.history_bill.AnalyticsActivity" />
         <activity android:name=".ui.location.LocationActivity" />
-
     </application>
 
 </manifest>
