@@ -55,18 +55,26 @@ class LoginActivity : AppCompatActivity() {
             //kiểm tra tài khoản
             try {
                 val userCurrent = db.userDao().login(email, password)
-                if(userCurrent != null) {
+
+                // KIỂM TRA ACTIVE (Admin yêu cầu: Nếu bị khóa thì không cho vào)
+                if (userCurrent != null) {
+                    if (!userCurrent.isActive) {
+                        Toast.makeText(this, "Tài khoản đã bị khóa!", Toast.LENGTH_SHORT).show()
+                        return@setOnClickListener
+                    }
+
                     // Lưu session
                     val session = UserSession(this)
-                    session.saveUser(userCurrent.email)
+
+                    session.saveUser(userCurrent.email, userCurrent.role)
 
                     Toast.makeText(this, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show()
                     startActivity(Intent(this, MainActivity::class.java))
                     finish()
-                }else {
+                } else {
                     Toast.makeText(this, "Sai email hoặc mật khẩu", Toast.LENGTH_SHORT).show()
                 }
-            }catch (e: Exception) {
+            } catch (e: Exception) {
                 Log.d("Error", e.message.toString())
             }
         }

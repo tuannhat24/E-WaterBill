@@ -14,7 +14,6 @@ import com.example.billmanager.data.local.database.AppDatabase
 import com.example.billmanager.data.local.entity.User
 import com.example.billmanager.ui.auth.login.LoginActivity
 import com.example.billmanager.utils.UserSession
-import org.w3c.dom.Text
 
 class ProfileActivity : AppCompatActivity() {
     lateinit var txtProfileName: TextView
@@ -29,6 +28,7 @@ class ProfileActivity : AppCompatActivity() {
     lateinit var btnLogout: LinearLayout
     lateinit var db: AppDatabase
     var isEditing = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_profile)
@@ -54,15 +54,24 @@ class ProfileActivity : AppCompatActivity() {
         db = AppDatabase.getInstance(this)
         val session = UserSession(this)
         val email = session.getUserEmail()
-        //lấy thông tin user theo email
-        val currentUser = db.userDao().findByEmail(email)
-        refreshUserUI(currentUser!!)
+
+        // Lấy thông tin user theo email
+        // Lưu ý: findByEmail có thể trả về null, nên check null an toàn
+        var currentUser = db.userDao().findByEmail(email)
+
+        if (currentUser != null) {
+            refreshUserUI(currentUser)
+        }
 
         btnBack.setOnClickListener {
             finish()
         }
-        //Chỉnh sửa thông tin
+
+        // Chỉnh sửa thông tin
         btnEdit.setOnClickListener {
+            // Check lại currentUser đề phòng null
+            if (currentUser == null) return@setOnClickListener
+
             if (!isEditing) {
                 enableEditing()
             } else {
@@ -74,38 +83,54 @@ class ProfileActivity : AppCompatActivity() {
                     Toast.makeText(this, "Không được để trống", Toast.LENGTH_SHORT).show()
                     return@setOnClickListener
                 }
-                // Kiểm tra email trùng với user khác
+
+                // Kiểm tra email trùng với user khác (trừ chính mình ra)
                 val existing = db.userDao().findByEmail(updateEmail)
-                if (existing != null && existing.id != currentUser.id) {
+                if (existing != null && existing.id != currentUser!!.id) {
                     Toast.makeText(this, "Email đã tồn tại!", Toast.LENGTH_SHORT).show()
                     return@setOnClickListener
                 }
+
+                // Cập nhật User
+                // QUAN TRỌNG: Phải giữ nguyên role và isActive của user cũ
                 val dataUserUpdate = User(
-                    id = currentUser.id,
+                    id = currentUser!!.id,
                     fullName = updateFullName,
                     email = updateEmail,
                     phoneNumber = updatePhoneNumber,
-                    password = currentUser.password
+                    password = currentUser!!.password,
+                    role = currentUser!!.role,
+                    isActive = currentUser!!.isActive
                 )
+
                 db.userDao().update(dataUserUpdate)
-                session.saveUser(updateEmail)
+
+                // Cập nhật Session với Email mới và Role cũ
+                // Truyền thêm currentUser.role
+                session.saveUser(updateEmail, currentUser!!.role)
+
+                // Cập nhật biến currentUser hiện tại để dùng tiếp nếu user chưa thoát
+                currentUser = dataUserUpdate
+
                 refreshUserUI(dataUserUpdate)
                 Toast.makeText(this, "Cập nhật thành công", Toast.LENGTH_SHORT).show()
 
                 disableEditing()
             }
         }
-        //xóa tài khoản
+
+        // Xóa tài khoản
         btnDeleteAccount.setOnClickListener {
+            if (currentUser == null) return@setOnClickListener
+
             AlertDialog.Builder(this)
                 .setTitle("Xóa tài khoản")
                 .setMessage("Bạn có chắc muốn xóa tài khoản?")
                 .setPositiveButton("Yes") { _, _ ->
                     try {
                         session.clearSession()
-                        db.userDao().delete(currentUser)
-                        Toast.makeText(this, "Xóa tài khoản thành công!", Toast.LENGTH_SHORT)
-                            .show()
+                        db.userDao().delete(currentUser!!)
+                        Toast.makeText(this, "Xóa tài khoản thành công!", Toast.LENGTH_SHORT).show()
                         startActivity(Intent(this, LoginActivity::class.java))
                         finish()
                     } catch (e: Exception) {
@@ -116,15 +141,14 @@ class ProfileActivity : AppCompatActivity() {
                 .show()
         }
 
-        //Đăng xuất tài khoản
+        // Đăng xuất tài khoản
         btnLogout.setOnClickListener {
             AlertDialog.Builder(this)
                 .setTitle("Đăng xuất")
                 .setMessage("Bạn có chắc muốn đăng xuất không?")
                 .setPositiveButton("Yes") { _, _ ->
                     session.clearSession()
-                    Toast.makeText(this, "Đã đăng xuất", Toast.LENGTH_SHORT)
-                        .show()
+                    Toast.makeText(this, "Đã đăng xuất", Toast.LENGTH_SHORT).show()
                     startActivity(Intent(this, LoginActivity::class.java))
                     finish()
                 }
@@ -157,5 +181,4 @@ class ProfileActivity : AppCompatActivity() {
         edtEmail.setText(user.email)
         edtPhoneNumber.setText(user.phoneNumber)
     }
-
 }

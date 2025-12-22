@@ -9,14 +9,19 @@ class UserSession(context: Context) {
     private val prefs: SharedPreferences =
         context.getSharedPreferences("user_session", Context.MODE_PRIVATE)
 
-    fun saveUser(email: String) {
+    fun saveUser(email: String, role: String) {
         prefs.edit {
             putString("email", email)
+            putString("role", role)
         }
     }
 
     fun getUserEmail(): String? {
         return prefs.getString("email", null)
+    }
+
+    fun getUserRole(): String {
+        return prefs.getString("role", "Customer") ?: "Customer"
     }
 
     fun clearSession() {
