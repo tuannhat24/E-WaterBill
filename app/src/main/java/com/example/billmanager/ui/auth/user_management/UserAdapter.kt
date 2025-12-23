@@ -48,6 +48,12 @@ class UserAdapter(
         holder.btnLock.text =
             if (user.isActive) "Khóa tài khoản" else "Mở khóa tài khoản"
 
+        if (user.role == "Admin") {
+            holder.btnLock.visibility = View.GONE
+        } else {
+            holder.btnLock.visibility = View.VISIBLE
+        }
+
         holder.btnLock.setOnClickListener { onLock(user) }
     }
 }

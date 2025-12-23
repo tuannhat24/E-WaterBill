@@ -59,7 +59,7 @@ class LoginActivity : AppCompatActivity() {
                 // KIỂM TRA ACTIVE (Admin yêu cầu: Nếu bị khóa thì không cho vào)
                 if (userCurrent != null) {
                     if (!userCurrent.isActive) {
-                        Toast.makeText(this, "Tài khoản đã bị khóa!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Tài khoản đã bị khóa. Vui lòng liên hệ admin để biết thêm chi tiết!", Toast.LENGTH_SHORT).show()
                         return@setOnClickListener
                     }
 
