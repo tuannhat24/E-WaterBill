@@ -41,6 +41,9 @@ class UserManagementMainActivity : AppCompatActivity() {
     }
 
     private fun setEvent() {
+        btnBack.setOnClickListener {
+            finish()
+        }
         adapter = UserAdapter(
             onLock = { toggleLock(it) },
             onClickUser = { showUserDetailStats(it) }
