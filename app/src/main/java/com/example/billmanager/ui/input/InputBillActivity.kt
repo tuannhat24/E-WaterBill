@@ -12,6 +12,7 @@ import com.example.billmanager.data.model.NotificationType
 import com.example.billmanager.data.repository.HoaDonRepository
 import com.example.billmanager.utils.BillCalculator
 import com.example.billmanager.utils.NotificationHelper
+import com.example.billmanager.utils.UserSession
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -78,7 +79,8 @@ class InputBillActivity : AppCompatActivity() {
 
     private fun loadLocationSpinner() {
         listLocation = AppDatabase.getInstance(this).locationDao().getAll()
-        val locationNames = if (listLocation.isNotEmpty()) listLocation.map { it.name } else listOf("Mặc định")
+        val locationNames =
+            if (listLocation.isNotEmpty()) listLocation.map { it.name } else listOf("Mặc định")
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, locationNames)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spnLocation.adapter = adapter
@@ -140,7 +142,10 @@ class InputBillActivity : AppCompatActivity() {
         val currentTime = Calendar.getInstance().time
         val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
         val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-        val locationId = if (listLocation.isNotEmpty()) listLocation[spnLocation.selectedItemPosition].id else 1
+        val locationId =
+            if (listLocation.isNotEmpty()) listLocation[spnLocation.selectedItemPosition].id else 1
+        val userSession = UserSession(this)
+        val currentUserEmail = userSession.getUserEmail() ?: ""
 
         val hoaDon = HoaDonEntity(
             id = billToEdit?.id ?: 0,
@@ -154,7 +159,8 @@ class InputBillActivity : AppCompatActivity() {
             gio = billToEdit?.gio ?: timeFormat.format(currentTime),
             ngay = billToEdit?.ngay ?: dateFormat.format(currentTime),
             trangThai = billToEdit?.trangThai ?: "Chưa thanh toán",
-            locationId = locationId
+            locationId = locationId,
+            userEmail = currentUserEmail
         )
 
         if (billToEdit != null) {
@@ -179,11 +185,16 @@ class InputBillActivity : AppCompatActivity() {
         CoroutineScope(Dispatchers.IO).launch {
             val db = AppDatabase.getInstance(this@InputBillActivity)
             val notiTitle = "Hóa đơn mới: ${hoaDon.loai}"
-            val notiMsg = "T${hoaDon.thang}/${hoaDon.nam}: ${String.format("%,d", hoaDon.tongTien)}đ"
-            val notiType = if (hoaDon.loai == "Điện") NotificationType.ELECTRIC else NotificationType.WATER
+            val notiMsg =
+                "T${hoaDon.thang}/${hoaDon.nam}: ${String.format("%,d", hoaDon.tongTien)}đ"
+            val notiType =
+                if (hoaDon.loai == "Điện") NotificationType.ELECTRIC else NotificationType.WATER
 
             val newNoti = NotificationEntity(
-                title = notiTitle, message = notiMsg, type = notiType, timestamp = System.currentTimeMillis()
+                title = notiTitle,
+                message = notiMsg,
+                type = notiType,
+                timestamp = System.currentTimeMillis()
             )
             db.notificationDao().insertNotification(newNoti)
 
@@ -215,16 +226,27 @@ class InputBillActivity : AppCompatActivity() {
                 if (totalSpent > budget.amountLimit) {
                     val diff = totalSpent - budget.amountLimit
                     val title = "⚠️ CẢNH BÁO CHI TIÊU"
-                    val msg = "Tiền ${bill.loai} T${bill.thang} vượt hạn mức ${String.format("%,.0f", diff)}đ!"
+                    val msg = "Tiền ${bill.loai} T${bill.thang} vượt hạn mức ${
+                        String.format(
+                            "%,.0f",
+                            diff
+                        )
+                    }đ!"
 
                     val noti = NotificationEntity(
-                        title = title, message = msg, type = NotificationType.WARNING, timestamp = System.currentTimeMillis()
+                        title = title,
+                        message = msg,
+                        type = NotificationType.WARNING,
+                        timestamp = System.currentTimeMillis()
                     )
                     db.notificationDao().insertNotification(noti)
 
                     runOnUiThread {
                         NotificationHelper(this@InputBillActivity).showNotification(
-                            title, msg, (System.currentTimeMillis().toInt() + 1), NotificationType.WARNING
+                            title,
+                            msg,
+                            (System.currentTimeMillis().toInt() + 1),
+                            NotificationType.WARNING
                         )
                     }
                 }

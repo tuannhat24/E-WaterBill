@@ -10,7 +10,8 @@ import com.example.billmanager.R
 import com.example.billmanager.data.local.entity.User
 
 class UserAdapter(
-    val onLock: (User) -> Unit
+    val onLock: (User) -> Unit,
+    val onClickUser: (User) -> Unit
 ) : RecyclerView.Adapter<UserAdapter.UserViewHolder>() {
 
     private var users = listOf<User>()
@@ -49,5 +50,6 @@ class UserAdapter(
             if (user.isActive) "Khóa tài khoản" else "Mở khóa tài khoản"
 
         holder.btnLock.setOnClickListener { onLock(user) }
+        holder.itemView.setOnClickListener { onClickUser(user) }
     }
 }

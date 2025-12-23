@@ -8,6 +8,17 @@
     android:padding="16dp"
     tools:ignore="UseSwitchCompatOrMaterialXml">
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#FFEB3B"
+        android:gravity="center"
+        android:padding="8dp"
+        android:text="Nhóm 10 - Bùi Nhật Tuấn"
+        android:textColor="#F44336"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
     <include
         android:id="@+id/layoutHeader"
         layout="@layout/layout_header" />
@@ -51,8 +62,8 @@
             android:textSize="16sp" />
 
         <ImageView
-            android:layout_width="16dp"
-            android:layout_height="16dp"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:rotation="180"
             android:src="@android:drawable/ic_media_play" />
     </LinearLayout>
@@ -82,8 +93,8 @@
             android:textSize="16sp" />
 
         <ImageView
-            android:layout_width="16dp"
-            android:layout_height="16dp"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:rotation="180"
             android:src="@drawable/ic_arrow_back"
             app:tint="#757575" />

@@ -10,6 +10,9 @@ interface HoaDonDao {
     @Query("SELECT * FROM hoadon ORDER BY nam DESC, thang DESC")
     fun getAll(): List<HoaDonEntity>
 
+    @Query("SELECT * FROM hoadon WHERE userEmail = :email ORDER BY nam DESC, thang DESC")
+    fun getBillsByUser(email: String): List<HoaDonEntity>
+
     @Insert
     fun insert(entity: HoaDonEntity)
 

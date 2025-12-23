@@ -5,6 +5,7 @@ import android.graphics.Color
 import android.os.Bundle
 import android.widget.Button
 import android.widget.ImageButton
+import android.widget.RadioGroup
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
@@ -19,10 +20,7 @@ import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import java.util.ArrayList
 
 class PredictionActivity : AppCompatActivity() {
-
     private lateinit var viewModel: PredictionViewModel
-
-    // Controls
     private lateinit var lineChart: LineChart
     private lateinit var tvTitle: TextView
     private lateinit var btnBack: ImageButton
@@ -31,18 +29,17 @@ class PredictionActivity : AppCompatActivity() {
     private lateinit var tvWaterPred: TextView
     private lateinit var tvComparisonMessage: TextView
     private lateinit var btnAdjustBudget: Button
+    private lateinit var rgType: RadioGroup
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_prediction)
 
-        // Init ViewModel
         viewModel = ViewModelProvider(this)[PredictionViewModel::class.java]
 
         setControl()
         setupChartConfig()
 
-        // Gọi hàm tính toán
         viewModel.calculatePrediction()
 
         setEvent()
@@ -61,6 +58,7 @@ class PredictionActivity : AppCompatActivity() {
         tvWaterPred = findViewById(R.id.tvWaterPred)
         tvComparisonMessage = findViewById(R.id.tvComparisonMessage)
         btnAdjustBudget = findViewById(R.id.btnAdjustBudget)
+        rgType = findViewById(R.id.rgPredictionType)
     }
 
     private fun setEvent() {
@@ -86,8 +84,17 @@ class PredictionActivity : AppCompatActivity() {
                 tvComparisonMessage.setTextColor(Color.parseColor("#4CAF50"))
             }
 
-            // 2. Vẽ biểu đồ (Vẽ đường tiền Điện làm mẫu chính)
-            updateChart(result.historyElectric, result.electricPredicted)
+            // 2. Vẽ biểu đồ
+            drawChart(result.historyElectric, result.electricPredicted, result.realMonths, "Điện")
+
+            // Sự kiện chuyển đổi
+            rgType.setOnCheckedChangeListener { _, checkedId ->
+                if (checkedId == R.id.rbPredElectric) {
+                    drawChart(result.historyElectric, result.electricPredicted, result.realMonths, "Điện")
+                } else {
+                    drawChart(result.historyWater, result.waterPredicted, result.realMonths, "Nước")
+                }
+            }
         }
     }
 
@@ -106,40 +113,31 @@ class PredictionActivity : AppCompatActivity() {
         lineChart.axisRight.isEnabled = false
     }
 
-    private fun updateChart(history: List<Double>, prediction: Double) {
+    private fun drawChart(history: List<Double>, prediction: Double, labels: List<String>, type: String) {
         val entries = ArrayList<Entry>()
-        val labels = ArrayList<String>()
 
-        // 1. Dữ liệu Lịch sử
+        // Vẽ dữ liệu lịch sử
         history.forEachIndexed { index, value ->
             entries.add(Entry(index.toFloat(), value.toFloat()))
-            labels.add("T${index + 1}") // Nhãn giả lập T1, T2... (Cần logic lấy tháng thật nếu muốn xịn hơn)
         }
 
-        // 2. Dữ liệu Dự báo (Điểm cuối cùng)
-        val nextIndex = history.size
-        entries.add(Entry(nextIndex.toFloat(), prediction.toFloat()))
-        labels.add("Dự báo")
+        // Vẽ điểm dự báo (Nối tiếp điểm cuối cùng)
+        if (history.isNotEmpty()) {
+            val nextIndex = history.size.toFloat()
+            entries.add(Entry(nextIndex, prediction.toFloat()))
+        }
 
-        // Tạo Dataset
-        val dataSet = LineDataSet(entries, "Xu hướng Điện (VNĐ)")
-        dataSet.color = Color.BLUE
-        dataSet.valueTextColor = Color.BLACK
-        dataSet.valueTextSize = 10f
-        dataSet.lineWidth = 2f
-        dataSet.circleRadius = 4f
-        dataSet.setCircleColor(Color.BLUE)
+        val dataSet = LineDataSet(entries, "Xu hướng $type")
+        dataSet.color = if (type == "Điện") Color.BLUE else Color.CYAN
+        dataSet.setCircleColor(Color.RED)
 
-        // Highlight điểm dự báo (Optional)
-        // dataSet.circleColors = ... (Logic nâng cao để đổi màu điểm cuối)
+        // cấu hình trục x
+        val xAxis = lineChart.xAxis
+        xAxis.valueFormatter = IndexAxisValueFormatter(labels + "Dự báo")
+        xAxis.position = XAxis.XAxisPosition.BOTTOM
+        xAxis.granularity = 1f
 
-        val lineData = LineData(dataSet)
-        lineChart.data = lineData
-
-        // Cập nhật nhãn trục X
-        lineChart.xAxis.valueFormatter = IndexAxisValueFormatter(labels)
-
-        lineChart.animateX(1000)
-        lineChart.invalidate() // Refresh
+        lineChart.data = LineData(dataSet)
+        lineChart.invalidate()
     }
 }

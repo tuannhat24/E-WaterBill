@@ -1,13 +1,13 @@
 package com.example.billmanager.utils
 
 import android.content.Context
+import android.net.Uri
 import android.os.Environment
 import com.example.billmanager.data.local.database.AppDatabase
 import com.example.billmanager.data.local.entity.HoaDonEntity
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.File
-import java.io.FileReader
 import java.io.FileWriter
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -15,21 +15,30 @@ import java.util.Locale
 
 object BackupHelper {
 
-    // Xuất danh sách hóa đơn ra file JSON
+    // EXPORT: lọc theo User
     fun exportData(context: Context): String {
         val db = AppDatabase.getInstance(context)
-        val bills = db.hoaDonDao().getAll()
+        val session = UserSession(context)
+        val email = session.getUserEmail() ?: return "Chưa đăng nhập!"
+
+        // Lấy hóa đơn của User hiện tại
+        val bills = try {
+            db.hoaDonDao().getBillsByUser(email)
+        } catch (e: Exception) {
+            // Fallback nếu chưa update DAO
+            db.hoaDonDao().getAll().filter { it.userEmail == email }
+        }
 
         if (bills.isEmpty()) return "Không có dữ liệu để sao lưu."
 
         val gson = Gson()
         val jsonString = gson.toJson(bills)
 
-        // Tạo tên file theo thời gian: backup_bills_20251216_1430.json
+        // Đặt tên file kèm Email để phân biệt
         val timeStamp = SimpleDateFormat("yyyyMMdd_HHmm", Locale.getDefault()).format(Date())
-        val fileName = "backup_bills_$timeStamp.json"
+        val safeEmail = email.replace("@", "_at_").replace(".", "_")
+        val fileName = "backup_${safeEmail}_$timeStamp.json"
 
-        // Lưu vào thư mục Download/UtilityBillBackup
         val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
         val appDir = File(downloadDir, "UtilityBillBackup")
         if (!appDir.exists()) appDir.mkdirs()
@@ -47,43 +56,61 @@ object BackupHelper {
         }
     }
 
-    // Nhập dữ liệu từ file JSON (Demo: Đọc file mới nhất)
-    fun importData(context: Context): String {
-        val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-        val appDir = File(downloadDir, "UtilityBillBackup")
-
-        if (!appDir.exists() || appDir.listFiles()?.isEmpty() == true) {
-            return "Không tìm thấy file backup nào."
-        }
-
-        // Lấy file mới nhất
-        val latestFile = appDir.listFiles()?.maxByOrNull { it.lastModified() } ?: return "Lỗi file."
+    //IMPORT TỪ URI
+    fun importFromUri(context: Context, uri: Uri): String {
+        val session = UserSession(context)
+        val currentUserEmail = session.getUserEmail() ?: return "Chưa đăng nhập!"
 
         return try {
-            val reader = FileReader(latestFile)
+            val inputStream = context.contentResolver.openInputStream(uri)
+            val jsonString = inputStream?.bufferedReader().use { it?.readText() }
+
+            if (jsonString.isNullOrEmpty()) return "File rỗng hoặc lỗi!"
+
             val type = object : TypeToken<List<HoaDonEntity>>() {}.type
-            val bills: List<HoaDonEntity> = Gson().fromJson(reader, type)
-            reader.close()
+            val bills: List<HoaDonEntity> = Gson().fromJson(jsonString, type)
 
-            // Insert vào DB
+            if (bills.isEmpty()) return "Không tìm thấy hóa đơn trong file."
+
             val db = AppDatabase.getInstance(context)
-            bills.forEach { db.hoaDonDao().insert(it) } // Insert đè hoặc thêm mới tùy ID
+            var count = 0
 
-            "Khôi phục thành công ${bills.size} hóa đơn từ file ${latestFile.name}!"
+            bills.forEach { bill ->
+                // QUAN TRỌNG: Gán lại chủ sở hữu là người đang đăng nhập
+                // Để tránh việc import nhầm data của người khác nhưng vẫn giữ nguyên chủ cũ
+                val newBill = bill.copy(
+                    id = 0, // Reset ID để tạo mới
+                    userEmail = currentUserEmail // Gán về chính chủ hiện tại
+                )
+                db.hoaDonDao().insert(newBill)
+                count++
+            }
+
+            "Đã khôi phục thành công $count hóa đơn!"
         } catch (e: Exception) {
             e.printStackTrace()
-            "Lỗi khôi phục: ${e.message}"
+            "Lỗi import: ${e.message}"
         }
     }
 
-    // Xóa dữ liệu cũ hơn 2 năm
+    //XÓA DỮ LIỆU CŨ
     fun deleteOldData(context: Context): Int {
         val db = AppDatabase.getInstance(context)
-        val allBills = db.hoaDonDao().getAll()
+        val session = UserSession(context)
+        val email = session.getUserEmail() ?: return 0
+
         val currentYear = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)
 
+        // Lấy list của user
+        val bills = try {
+            db.hoaDonDao().getBillsByUser(email)
+        } catch (e: Exception) {
+            db.hoaDonDao().getAll().filter { it.userEmail == email }
+        }
+
         var deletedCount = 0
-        allBills.forEach { bill ->
+        bills.forEach { bill ->
+            // Xóa nếu cũ hơn 2 năm
             if (bill.nam < currentYear - 2) {
                 db.hoaDonDao().delete(bill)
                 deletedCount++

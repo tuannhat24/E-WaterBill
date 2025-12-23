@@ -18,7 +18,6 @@ data class HoaDonEntity(
     val gio: String,
     val ngay: String,
     var trangThai: String,
-    val ghiChu: String = "",
-    val phuongThucThanhToan: String = "",
-    val locationId: Int = 1
+    val locationId: Int = 1,
+    val userEmail: String = ""
 ) : Serializable

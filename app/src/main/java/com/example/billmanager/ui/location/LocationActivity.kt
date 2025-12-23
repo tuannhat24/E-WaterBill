@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -33,6 +34,20 @@ class LocationActivity : AppCompatActivity() {
     private lateinit var db: AppDatabase
     private lateinit var locationDao: LocationDao
     private lateinit var adapter: LocationAdapter
+
+    // --- 1. KHAI BÁO TRÌNH CHỌN FILE (MỚI) ---
+    private val importLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == android.app.Activity.RESULT_OK) {
+                val uri = result.data?.data
+                if (uri != null) {
+                    // Gọi hàm Import mới từ BackupHelper
+                    val msg = BackupHelper.importFromUri(this, uri)
+                    showAlert(msg)
+                    loadData() // Load lại UI sau khi import xong
+                }
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -115,10 +130,14 @@ class LocationActivity : AppCompatActivity() {
             showAlert(msg)
         }
 
+        // --- 2. SỬA SỰ KIỆN RESTORE (IMPORT) ---
         btnRestore.setOnClickListener {
-            val msg = BackupHelper.importData(this)
-            showAlert(msg)
-            loadData() // Load lại UI sau khi import
+            // Mở trình chọn file của Android
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "application/json" // Chỉ hiện file JSON
+            }
+            importLauncher.launch(intent)
         }
 
         btnCleanStorage.setOnClickListener {
@@ -128,6 +147,7 @@ class LocationActivity : AppCompatActivity() {
                 .setPositiveButton("Xóa") { _, _ ->
                     val count = BackupHelper.deleteOldData(this)
                     Toast.makeText(this, "Đã xóa $count hóa đơn cũ.", Toast.LENGTH_SHORT).show()
+                    loadData()
                 }
                 .setNegativeButton("Hủy", null)
                 .show()
@@ -203,52 +223,5 @@ class LocationActivity : AppCompatActivity() {
 
     private fun showAlert(msg: String) {
         AlertDialog.Builder(this).setMessage(msg).setPositiveButton("OK", null).show()
-    }
-
-    // INNER ADAPTER CLASS
-    inner class LocationAdapter(
-        private var list: List<LocationEntity>,
-        private val onAction: (LocationEntity, String) -> Unit
-    ) : RecyclerView.Adapter<LocationAdapter.VH>() {
-
-        inner class VH(v: View) : RecyclerView.ViewHolder(v) {
-            val tvName: TextView = v.findViewById(android.R.id.text1)
-            val tvAddress: TextView = v.findViewById(android.R.id.text2)
-            val btnSwitch: Button = v.findViewById(R.id.btnSwitch)
-            val btnEdit: ImageButton = v.findViewById(R.id.btnEdit)
-            val btnDelete: ImageButton = v.findViewById(R.id.btnDelete)
-            val root: View = v.findViewById(R.id.rootLayout)
-        }
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-            val v =
-                LayoutInflater.from(parent.context).inflate(R.layout.item_location, parent, false)
-            return VH(v)
-        }
-
-        override fun onBindViewHolder(holder: VH, position: Int) {
-            val item = list[position]
-            holder.tvName.text = item.name
-            holder.tvAddress.text = "${item.address} - ${item.type}"
-
-            if (item.isSelected) {
-                holder.root.setBackgroundColor(android.graphics.Color.parseColor("#E0F2F1"))
-                holder.btnSwitch.text = "Đang chọn"
-                holder.btnSwitch.isEnabled = false
-            } else {
-                holder.root.setBackgroundColor(android.graphics.Color.WHITE)
-                holder.btnSwitch.text = "Chọn"
-                holder.btnSwitch.isEnabled = true
-            }
-
-            holder.btnSwitch.setOnClickListener { onAction(item, "SELECT") }
-            holder.btnEdit.setOnClickListener { onAction(item, "EDIT") }
-            holder.btnDelete.setOnClickListener { onAction(item, "DELETE") }
-        }
-
-        override fun getItemCount() = list.size
-        fun updateList(newList: List<LocationEntity>) {
-            list = newList; notifyDataSetChanged()
-        }
     }
 }

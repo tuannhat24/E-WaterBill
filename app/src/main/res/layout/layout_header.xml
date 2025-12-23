@@ -14,8 +14,8 @@
         android:src="@drawable/ic_arrow_back"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:padding="8dp"
-        android:layout_width="40dp"
-        android:layout_height="40dp"/>
+        android:layout_width="48dp"
+        android:layout_height="48dp"/>
 
     <TextView
         android:id="@+id/tvTitle"

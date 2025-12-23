@@ -2,6 +2,9 @@ package com.example.billmanager.ui.budget
 
 import android.content.res.ColorStateList
 import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.ProgressBar
@@ -9,14 +12,24 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.billmanager.R
 import com.example.billmanager.data.local.database.AppDatabase
-import com.example.billmanager.data.repository.BudgetRepository
 import com.example.billmanager.utils.BudgetUtils
+import com.example.billmanager.utils.UserSession
 import com.google.android.material.textfield.TextInputEditText
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.text.NumberFormat
+import java.util.Locale
 
 class BudgetActivity : AppCompatActivity() {
     private lateinit var viewModel: BudgetViewModel
+
+    // Controls
     private lateinit var edtElectric: TextInputEditText
     private lateinit var edtWater: TextInputEditText
     private lateinit var btnSave: Button
@@ -31,6 +44,9 @@ class BudgetActivity : AppCompatActivity() {
     private lateinit var tvTitle: TextView
     private lateinit var btnBack: ImageButton
 
+    // Control mới cho bảng lịch sử
+    private lateinit var rvHistory: RecyclerView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_budget)
@@ -40,11 +56,15 @@ class BudgetActivity : AppCompatActivity() {
         setControl()
         setEvent()
         observeData()
+
+        // Tải bảng lịch sử ngay khi mở
+        loadHistoryTable()
     }
 
     override fun onResume() {
         super.onResume()
         viewModel.loadRealUsage()
+        loadHistoryTable() // Refresh bảng khi quay lại
     }
 
     private fun setControl() {
@@ -59,9 +79,14 @@ class BudgetActivity : AppCompatActivity() {
         tvWaterAlert = findViewById(R.id.tvWaterAlert)
         tvElectricAdvice = findViewById(R.id.tvElectricAdvice)
         tvWaterAdvice = findViewById(R.id.tvWaterAdvice)
+
         tvTitle = findViewById(R.id.tvTitle)
         tvTitle.text = "Quản lý hạn mức"
         btnBack = findViewById(R.id.btnBack)
+
+        // Ánh xạ RecyclerView lịch sử
+        rvHistory = findViewById(R.id.rvBudgetHistory)
+        rvHistory.layoutManager = LinearLayoutManager(this)
     }
 
     private fun setEvent() {
@@ -79,41 +104,68 @@ class BudgetActivity : AppCompatActivity() {
     }
 
     private fun observeData() {
-        // 1. Quan sát Tiền Điện Thực Tế
         viewModel.spentElectric.observe(this) { spent ->
-            // Lấy Budget Điện để so sánh
             val budget = viewModel.getBudgetForElectric().value
             val limit = budget?.amountLimit ?: 0.0
             if (budget != null) edtElectric.setText(String.format("%.0f", limit))
 
-            updateProgressUI(1, spent, limit, progressElectric, tvElectricStatus, tvElectricAlert, tvElectricAdvice)
+            updateProgressUI(
+                1,
+                spent,
+                limit,
+                progressElectric,
+                tvElectricStatus,
+                tvElectricAlert,
+                tvElectricAdvice
+            )
         }
 
-        // Khi Budget Điện thay đổi (User vừa lưu xong), cập nhật lại UI
         viewModel.getBudgetForElectric().observe(this) { budget ->
             val limit = budget?.amountLimit ?: 0.0
             val spent = viewModel.spentElectric.value ?: 0.0
             if (budget != null) edtElectric.setText(String.format("%.0f", limit))
 
-            updateProgressUI(1, spent, limit, progressElectric, tvElectricStatus, tvElectricAlert, tvElectricAdvice)
+            updateProgressUI(
+                1,
+                spent,
+                limit,
+                progressElectric,
+                tvElectricStatus,
+                tvElectricAlert,
+                tvElectricAdvice
+            )
         }
 
-        // 2. Quan sát Tiền Nước Thực Tế
         viewModel.spentWater.observe(this) { spent ->
             val budget = viewModel.getBudgetForWater().value
             val limit = budget?.amountLimit ?: 0.0
             if (budget != null) edtWater.setText(String.format("%.0f", limit))
 
-            updateProgressUI(2, spent, limit, progressWater, tvWaterStatus, tvWaterAlert, tvWaterAdvice)
+            updateProgressUI(
+                2,
+                spent,
+                limit,
+                progressWater,
+                tvWaterStatus,
+                tvWaterAlert,
+                tvWaterAdvice
+            )
         }
 
-        // Khi Budget Nước thay đổi
         viewModel.getBudgetForWater().observe(this) { budget ->
             val limit = budget?.amountLimit ?: 0.0
             val spent = viewModel.spentWater.value ?: 0.0
             if (budget != null) edtWater.setText(String.format("%.0f", limit))
 
-            updateProgressUI(2, spent, limit, progressWater, tvWaterStatus, tvWaterAlert, tvWaterAdvice)
+            updateProgressUI(
+                2,
+                spent,
+                limit,
+                progressWater,
+                tvWaterStatus,
+                tvWaterAlert,
+                tvWaterAdvice
+            )
         }
     }
 
@@ -130,20 +182,50 @@ class BudgetActivity : AppCompatActivity() {
         val color = BudgetUtils.getProgressColor(progress)
         val typeName = if (type == 1) "Điện" else "Nước"
 
-        tvStatus.text = "Đã dùng: ${String.format("%,.0f", currentUsed)}đ / ${String.format("%,.0f", limit)}đ"
+        tvStatus.text =
+            "Đã dùng: ${String.format("%,.0f", currentUsed)}đ / ${String.format("%,.0f", limit)}đ"
         tvAlert.text = BudgetUtils.getAlertMessage(progress, limit, typeName)
         tvAlert.setTextColor(color)
 
         progressBar.progress = progress
         progressBar.progressTintList = ColorStateList.valueOf(color)
 
-        // Hiển thị lời khuyên
         val adviceText = BudgetUtils.getAdvice(progress, type)
         if (adviceText.isNotEmpty()) {
             tvAdvice.text = adviceText
-            tvAdvice.visibility = android.view.View.VISIBLE
+            tvAdvice.visibility = View.VISIBLE
         } else {
-            tvAdvice.visibility = android.view.View.GONE
+            tvAdvice.visibility = View.GONE
+        }
+    }
+
+    private fun loadHistoryTable() {
+        CoroutineScope(Dispatchers.IO).launch {
+            val db = AppDatabase.getInstance(this@BudgetActivity)
+            val session = UserSession(this@BudgetActivity)
+            val email = session.getUserEmail() ?: ""
+
+            // Lấy hóa đơn của User
+            val allBills = db.hoaDonDao().getBillsByUser(email)
+
+            // Gom nhóm theo tháng (Key: "12/2025")
+            val grouped = allBills
+                .groupBy { "${it.thang}/${it.nam}" }
+                .map { (key, bills) ->
+                    val dien = bills.filter { it.loai == "Điện" }.sumOf { it.tongTien }
+                    val nuoc = bills.filter { it.loai == "Nước" }.sumOf { it.tongTien }
+                    // Logic sort để tháng mới nhất lên đầu
+                    val parts = key.split("/")
+                    val sortKey = parts[1].toInt() * 100 + parts[0].toInt()
+                    Triple(sortKey, key, HistoryItem(key, dien, nuoc))
+                }
+                .sortedByDescending { it.first } // Sắp xếp giảm dần theo thời gian
+                .take(6) // Lấy 6 tháng gần nhất
+                .map { it.third }
+
+            withContext(Dispatchers.Main) {
+                rvHistory.adapter = BudgetHistoryAdapter(grouped)
+            }
         }
     }
 }
