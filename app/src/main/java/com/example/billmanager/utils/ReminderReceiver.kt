@@ -6,64 +6,61 @@ import android.content.Intent
 import com.example.billmanager.data.local.database.AppDatabase
 import com.example.billmanager.data.local.entity.NotificationEntity
 import com.example.billmanager.data.model.NotificationType
-import com.example.billmanager.data.repository.NotificationRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.util.Random
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class ReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
+        // 1. Kiểm tra User đang đăng nhập
+        val userSession = UserSession(context)
+        if (!userSession.isLoggedIn()) return
+        val email = userSession.getUserEmail() ?: return
+
+        // 2. Khởi tạo DB
+        val db = AppDatabase.getInstance(context)
         val helper = NotificationHelper(context)
 
-        // Khởi tạo Repository từ Room Database
-        val database = AppDatabase.getDatabase(context)
-        val repository = NotificationRepository(database.notificationDao())
-
-        // Logic Random giả lập thông báo (Giữ lại để test)
-        val random = Random().nextInt(100)
-
         CoroutineScope(Dispatchers.IO).launch {
-            val noti: NotificationEntity
-            val notiId: Int
-
-            when {
-                random < 30 -> { // 30% cơ hội ra cảnh báo Budget
-                    noti = NotificationEntity(
-                        title = "⚠️ Cảnh báo chi tiêu",
-                        message = "Bạn đã dùng vượt 90% hạn mức Điện tháng này!",
-                        type = NotificationType.WARNING,
-                        timestamp = System.currentTimeMillis()
-                    )
-                    notiId = 1000
-                }
-
-                random < 65 -> { // 35% cơ hội ra hóa đơn Điện
-                    noti = NotificationEntity(
-                        title = "Hóa đơn Tiền Điện",
-                        message = "Hóa đơn điện tháng này đã có. Vui lòng kiểm tra.",
-                        type = NotificationType.ELECTRIC,
-                        timestamp = System.currentTimeMillis()
-                    )
-                    notiId = 1001
-                }
-
-                else -> { // 35% cơ hội ra hóa đơn Nước
-                    noti = NotificationEntity(
-                        title = "Hóa đơn Tiền Nước",
-                        message = "Đã có hóa đơn nước kỳ mới.",
-                        type = NotificationType.WATER,
-                        timestamp = System.currentTimeMillis()
-                    )
-                    notiId = 1002
-                }
+            // 3. Lấy danh sách hóa đơn "Chưa thanh toán" của User này
+            val unpaidBills = db.hoaDonDao().getBillsByUser(email).filter {
+                it.trangThai == "Chưa thanh toán"
             }
 
-            // Lưu vào Database
-            repository.insert(noti)
+            // 4. Nếu có hóa đơn chưa trả thì thông báo
+            if (unpaidBills.isNotEmpty()) {
+                val count = unpaidBills.size
+                val totalMoney = unpaidBills.sumOf { it.tongTien }
 
-            // Hiển thị thông báo lên thanh trạng thái
-            helper.showNotification(noti.title, noti.message, notiId, noti.type)
+                // Định dạng tiền tệ
+                val moneyString = String.format("%,d", totalMoney)
+
+                // Nội dung thông báo
+                val title = "Nhắc nhở thanh toán"
+                val message = "Bạn có $count hóa đơn chưa thanh toán. Tổng: ${moneyString}đ"
+                val currentDate = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date())
+
+                val notiEntity = NotificationEntity(
+                    title = title,
+                    message = message,
+                    type = "WARNING",
+                    date = currentDate,
+                    isRead = false,
+                    userEmail = email
+                )
+                db.notificationDao().insert(notiEntity)
+
+                // B. Bắn thông báo lên thanh trạng thái điện thoại
+                helper.showNotification(
+                    title,
+                    message,
+                    9999, // ID cố định cho thông báo nhắc nhở (để không bị spam nhiều dòng)
+                    NotificationType.WARNING
+                )
+            }
         }
     }
 }

@@ -36,7 +36,7 @@ class UserManagementMainActivity : AppCompatActivity() {
     private fun setControl() {
         rvUsers = findViewById<RecyclerView>(R.id.rvUsers)
         tvTitle = findViewById<TextView>(R.id.tvTitle)
-        tvTitle.text = "Quản lý người dùng(Nhóm 10-Quang Dinh)"
+        tvTitle.text = "Quản lý người dùng"
         btnBack = findViewById<ImageButton>(R.id.btnBack)
     }
 

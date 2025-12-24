@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:background="#F5F5F5">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#FFEB3B"
+        android:gravity="center"
+        android:padding="10dp"
+        android:text="Nhóm 10 - Bùi Lộc Thành"
+        android:textColor="#F44336"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <include
+        android:id="@+id/layoutHeader"
+        layout="@layout/layout_header" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:text="1. Làm sao để thêm hóa đơn mới?"
+                android:textStyle="bold"
+                android:textColor="#2196F3"
+                android:textSize="16sp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+            <TextView
+                android:text="Tại màn hình chính hoặc màn hình Lịch sử, nhấn vào nút dấu cộng (+) màu xanh. Nhập đầy đủ thông tin chỉ số điện/nước và nhấn Lưu."
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="16dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+            <TextView
+                android:text="2. Ứng dụng tính tiền điện như thế nào?"
+                android:textStyle="bold"
+                android:textColor="#2196F3"
+                android:textSize="16sp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+            <TextView
+                android:text="Ứng dụng tự động tính theo bậc thang 6 bậc của EVN. Bạn có thể xem chi tiết số tiền từng bậc trong màn hình 'Chi tiết hóa đơn'."
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="16dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+            <TextView
+                android:text="3. Dữ liệu của tôi có bị mất không?"
+                android:textStyle="bold"
+                android:textColor="#2196F3"
+                android:textSize="16sp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+            <TextView
+                android:text="Dữ liệu được lưu trong máy. Để an toàn, hãy vào mục 'Quản lý Địa điểm &amp; Sao lưu' để xuất file backup (.json) ra bộ nhớ máy."
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="16dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+            <TextView
+                android:text="4. Chức năng Cảnh báo hạn mức là gì?"
+                android:textStyle="bold"
+                android:textColor="#2196F3"
+                android:textSize="16sp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+            <TextView
+                android:text="Bạn có thể đặt số tiền tối đa muốn chi trong tháng. Nếu hóa đơn vượt quá số này, ứng dụng sẽ hiện cảnh báo màu đỏ để bạn tiết kiệm hơn."
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="16dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#DDD"
+                android:layout_marginVertical="10dp"/>
+
+            <TextView
+                android:text="Liên hệ nhóm phát triển:"
+                android:textStyle="bold"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+            <TextView
+                android:text="Email: contact@nhom10.com\nHotline: 0987.654.321"
+                android:layout_marginTop="4dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+            <View android:layout_height="50dp" android:layout_width="match_parent"/>
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

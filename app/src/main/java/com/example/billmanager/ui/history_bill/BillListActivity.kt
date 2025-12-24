@@ -2,6 +2,8 @@ package com.example.billmanager.ui.history_bill
 
 import android.app.AlertDialog
 import android.content.Intent
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -77,10 +79,9 @@ class BillListActivity : AppCompatActivity() {
     private fun checkRole() {
         val session = UserSession(this)
         val role = session.getUserRole()
-        if (role != "Admin") {
-            btnAdd.visibility = View.GONE
-        } else {
-            btnAdd.visibility = View.VISIBLE
+        btnAdd.visibility = View.VISIBLE
+        if (role == "Admin") {
+            btnAdd.backgroundTintList = ColorStateList.valueOf(Color.RED)
         }
     }
 

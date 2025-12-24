@@ -173,7 +173,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun observeNotifications() {
-        notificationViewModel.allNotifications.observe(this) { notifications ->
+        // --- SỬA LỖI: Dùng biến notifications của ViewModel ---
+        notificationViewModel.notifications.observe(this) { notifications ->
             val unreadCount = notifications.count { !it.isRead }
             if (unreadCount > 0) {
                 tvUnreadCount.text = if (unreadCount > 99) "99+" else unreadCount.toString()

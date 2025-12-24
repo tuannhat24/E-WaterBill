@@ -1,24 +1,26 @@
 package com.example.billmanager.data.local.dao
 
-import androidx.lifecycle.LiveData
 import androidx.room.*
 import com.example.billmanager.data.local.entity.NotificationEntity
 
 @Dao
 interface NotificationDao {
-    // Lấy tất cả thông báo, mới nhất lên đầu
-    @Query("SELECT * FROM notifications ORDER BY timestamp DESC")
-    fun getAllNotifications(): LiveData<List<NotificationEntity>>
+    @Query("SELECT * FROM notifications WHERE userEmail = :email ORDER BY id DESC")
+    fun getNotificationsByUser(email: String): List<NotificationEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertNotification(notification: NotificationEntity)
+    fun insert(notification: NotificationEntity)
 
     @Update
-    suspend fun updateNotification(notification: NotificationEntity)
+    fun update(notification: NotificationEntity)
 
     @Delete
-    suspend fun deleteNotification(notification: NotificationEntity)
+    fun delete(notification: NotificationEntity)
 
-    @Query("UPDATE notifications SET isRead = 1")
-    suspend fun markAllAsRead()
+    @Query("UPDATE notifications SET isRead = 1 WHERE userEmail = :email")
+    fun markAllAsRead(email: String)
+
+    // Xóa tất cả (Theo User)
+    @Query("DELETE FROM notifications WHERE userEmail = :email")
+    fun clearAll(email: String)
 }

@@ -8,15 +8,18 @@ import androidx.lifecycle.viewModelScope
 import com.example.billmanager.data.local.database.AppDatabase
 import com.example.billmanager.data.local.entity.Budget
 import com.example.billmanager.data.repository.BudgetRepository
-import com.example.billmanager.data.repository.HoaDonRepository
+import com.example.billmanager.utils.UserSession
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
 class BudgetViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val budgetRepo: BudgetRepository
-    private val billRepo: HoaDonRepository
+    private val db = AppDatabase.getInstance(application)
+    // Sử dụng Repository thay vì DAO
+    private val budgetRepo = BudgetRepository(db.budgetDao())
+    private val billDao = db.hoaDonDao()
+    private val userSession = UserSession(application)
 
     private val calendar = Calendar.getInstance()
     val currentMonth = calendar.get(Calendar.MONTH) + 1
@@ -29,27 +32,35 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
     val spentWater: LiveData<Double> = _spentWater
 
     init {
-        val db = AppDatabase.getInstance(application)
-        budgetRepo = BudgetRepository(db.budgetDao())
-        billRepo = HoaDonRepository(db.hoaDonDao())
-
         loadRealUsage()
     }
 
-    // Lấy Budget cấu hình (LiveData từ Room)
-    fun getBudgetForElectric(): LiveData<Budget?> = budgetRepo.getBudget(currentMonth, currentYear, 1)
-    fun getBudgetForWater(): LiveData<Budget?> = budgetRepo.getBudget(currentMonth, currentYear, 2)
+    // Lấy Budget cấu hình (Gọi qua Repository + truyền Email)
+    fun getBudgetForElectric(): LiveData<Budget?> {
+        val email = userSession.getUserEmail() ?: ""
+        return budgetRepo.getBudget(currentMonth, currentYear, 1, email)
+    }
 
-    // Lưu Budget
+    fun getBudgetForWater(): LiveData<Budget?> {
+        val email = userSession.getUserEmail() ?: ""
+        return budgetRepo.getBudget(currentMonth, currentYear, 2, email)
+    }
+
+    // Lưu Budget (Gọi qua Repository)
     fun saveBudget(type: Int, amount: Double) {
         viewModelScope.launch(Dispatchers.IO) {
+            val email = userSession.getUserEmail() ?: ""
+
             val budget = Budget(
-                type = type,
+                typeId = type,
                 amountLimit = amount,
                 month = currentMonth,
-                year = currentYear
+                year = currentYear,
+                userEmail = email
             )
+            // Repository sẽ tự lo việc Check Update/Insert
             budgetRepo.saveBudget(budget)
+
             loadRealUsage()
         }
     }
@@ -57,14 +68,15 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
     // Hàm tính tiền thực tế
     fun loadRealUsage() {
         viewModelScope.launch(Dispatchers.IO) {
-            val allBills = billRepo.getAll()
+            val email = userSession.getUserEmail() ?: ""
 
-            // Tổng tiền điện tháng này
+            // Lấy hóa đơn của riêng User
+            val allBills = billDao.getBillsByUser(email)
+
             val totalElec = allBills.filter {
                 it.loai == "Điện" && it.thang == currentMonth && it.nam == currentYear
             }.sumOf { it.tongTien }
 
-            // Tổng tiền nước tháng này
             val totalWater = allBills.filter {
                 it.loai == "Nước" && it.thang == currentMonth && it.nam == currentYear
             }.sumOf { it.tongTien }

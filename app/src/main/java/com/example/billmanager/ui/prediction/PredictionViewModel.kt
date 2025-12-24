@@ -7,17 +7,15 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.billmanager.data.local.database.AppDatabase
 import com.example.billmanager.data.local.entity.HoaDonEntity
-import com.example.billmanager.data.repository.BudgetRepository
-import com.example.billmanager.data.repository.HoaDonRepository
+import com.example.billmanager.utils.UserSession
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.time.Month
-import java.util.Calendar
 
 class PredictionViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val billRepo: HoaDonRepository
-    private val budgetRepo: BudgetRepository
+    private val db = AppDatabase.getInstance(application)
+    private val billDao = db.hoaDonDao()
+    private val userSession = UserSession(application)
 
     private val _predictionData = MutableLiveData<PredictionResult>()
     val predictionData: LiveData<PredictionResult> = _predictionData
@@ -32,15 +30,28 @@ class PredictionViewModel(application: Application) : AndroidViewModel(applicati
         val message: String
     )
 
-    init {
-        val db = AppDatabase.getInstance(application)
-        billRepo = HoaDonRepository(db.hoaDonDao())
-        budgetRepo = BudgetRepository(db.budgetDao())
-    }
-
     fun calculatePrediction() {
         viewModelScope.launch(Dispatchers.IO) {
-            val allBills = billRepo.getAll()
+            val email = userSession.getUserEmail() ?: ""
+
+            // QUAN TRỌNG: Lấy dữ liệu của User hiện tại
+            val allBills = billDao.getBillsByUser(email)
+
+            if (allBills.isEmpty()) {
+                // Xử lý khi chưa có dữ liệu
+                _predictionData.postValue(
+                    PredictionResult(
+                        0.0,
+                        0.0,
+                        0.0,
+                        emptyList(),
+                        emptyList(),
+                        emptyList(),
+                        "Chưa có dữ liệu để dự báo"
+                    )
+                )
+                return@launch
+            }
 
             // Lấy 6 tháng gần nhất có dữ liệu (Dựa trên hóa đơn Điện làm chuẩn thời gian)
             val sortedBills = allBills.filter { it.loai == "Điện" }
@@ -54,13 +65,12 @@ class PredictionViewModel(application: Application) : AndroidViewModel(applicati
             val electricHistory = getHistoryData(allBills, "Điện", 6)
             val waterHistory = getHistoryData(allBills, "Nước", 6)
 
-            // ... (Phần tính toán Moving Average giữ nguyên) ...
             val predElectric = calculateMovingAverage(electricHistory)
             val predWater = calculateMovingAverage(waterHistory)
             val totalPred = predElectric + predWater
 
-            // ... (Phần thông báo giữ nguyên) ...
-            val msg = "..."
+            val msg =
+                if (labels.size < 3) "Cần ít nhất 3 tháng dữ liệu để dự báo chính xác" else "Dự báo dựa trên trung bình động 3 tháng gần nhất"
 
             _predictionData.postValue(
                 PredictionResult(
@@ -77,7 +87,11 @@ class PredictionViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     // Hàm lấy danh sách tổng tiền 6 tháng gần nhất
-    private fun getHistoryData(allBills: List<HoaDonEntity>, type: String, limit: Int): List<Double> {
+    private fun getHistoryData(
+        allBills: List<HoaDonEntity>,
+        type: String,
+        limit: Int
+    ): List<Double> {
         return allBills
             .filter { it.loai == type }
             .sortedWith(compareBy({ it.nam }, { it.thang }))

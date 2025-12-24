@@ -10,5 +10,6 @@ data class LocationEntity(
     val name: String,
     val address: String,
     val type: String,
-    val isSelected: Boolean = false // Đánh dấu đây là địa điểm đang chọn để xem
+    val isSelected: Boolean = false,
+    val userEmail: String = ""
 ) : Serializable

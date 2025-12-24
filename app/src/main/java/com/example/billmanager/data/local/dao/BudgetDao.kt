@@ -5,23 +5,22 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import com.example.billmanager.data.local.entity.Budget
 
 @Dao
 interface BudgetDao {
-    @Query("SELECT * FROM budgets WHERE month = :month AND year = :year AND type = :type LIMIT 1")
-    fun getBudgetByMonth(month: Int, year: Int, type: Int): LiveData<Budget?>
+    // Lấy hạn mức của User cụ thể
+    @Query("SELECT * FROM budget WHERE month = :m AND year = :y AND typeId = :t AND userEmail = :email LIMIT 1")
+    fun getBudgetByUser(m: Int, y: Int, t: Int, email: String): LiveData<Budget?>
 
-    @Query("SELECT * FROM budgets WHERE month = :month AND year = :year AND type = :type LIMIT 1")
-    fun getBudgetSync(month: Int, year: Int, type: Int): Budget?
-    // --------------------
+    // Hàm đồng bộ (cho check notification)
+    @Query("SELECT * FROM budget WHERE month = :m AND year = :y AND typeId = :t AND userEmail = :email LIMIT 1")
+    fun getBudgetSyncByUser(m: Int, y: Int, t: Int, email: String): Budget?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertBudget(budget: Budget)
+    fun insert(budget: Budget)
 
-    @Query("DELETE FROM budgets WHERE month = :month AND year = :year AND type = :type")
-    fun deleteBudgetByMonth(month: Int, year: Int, type: Int)
-
-    @Query("SELECT * FROM budgets")
-    fun getAllBudgetsSync(): List<Budget>
+    @Update
+    fun update(budget: Budget)
 }

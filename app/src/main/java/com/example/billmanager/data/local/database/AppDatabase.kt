@@ -25,7 +25,7 @@ import com.example.billmanager.data.local.entity.LocationEntity
         NotificationEntity::class,
         LocationEntity::class
     ],
-    version = 15,
+    version = 16,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

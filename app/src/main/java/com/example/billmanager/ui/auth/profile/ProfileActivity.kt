@@ -46,7 +46,7 @@ class ProfileActivity : AppCompatActivity() {
         btnDeleteAccount = findViewById<LinearLayout>(R.id.btnDeleteAccount)
         btnLogout = findViewById<LinearLayout>(R.id.btnLogout)
         tvTitle = findViewById<TextView>(R.id.tvTitle)
-        tvTitle.text = "Thông tin cá nhân(Nhóm 10-Quang Dinh)"
+        tvTitle.text = "Thông tin cá nhân"
         btnBack = findViewById<ImageButton>(R.id.btnBack)
     }
 
