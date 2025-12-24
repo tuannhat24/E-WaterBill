@@ -97,17 +97,17 @@ class UserManagementMainActivity : AppCompatActivity() {
 
         // Nội dung Dialog
         val message = """
-            📧 Email: ${user.email}
-            📞 SĐT: ${user.phoneNumber}
+            Email: ${user.email}
+            SĐT: ${user.phoneNumber}
             --------------------------------
-            📊 TỔNG QUAN:
+            TỔNG QUAN:
             - Tổng số hóa đơn: $totalBills
             - Tổng tiền đã chi: ${formatVND.format(totalMoney)}
             
-            ✅ Đã thanh toán: $paidCount
-            ❌ Chưa thanh toán: $unpaidCount
+            Đã thanh toán: $paidCount
+            Chưa thanh toán: $unpaidCount
             
-            ⚠️ CHI TIẾT CÁC KHOẢN NỢ:
+            CHI TIẾT CÁC KHOẢN NỢ:
             $unpaidDetails
         """.trimIndent()
 
