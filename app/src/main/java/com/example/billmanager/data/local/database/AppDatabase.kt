@@ -25,10 +25,10 @@ import com.example.billmanager.data.local.entity.LocationEntity
         NotificationEntity::class,
         LocationEntity::class
     ],
-    version = 2,
+    version = 16,
     exportSchema = false
 )
-@TypeConverters(Converters::class) // Để xử lý NotificationType, Date...
+@TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun userDao(): UserDao
@@ -48,8 +48,9 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "bill_manager_full.db"
                 )
-                    .fallbackToDestructiveMigration() // Reset DB nếu đổi version (để tránh crash khi dev)
-                    .allowMainThreadQueries()         // Chỉ dùng cho đồ án/test nhanh
+                    .addCallback(DatabaseCallback(context))
+                    .fallbackToDestructiveMigration() // Reset DB nếu đổi version
+                    .allowMainThreadQueries()
                     .build()
                 INSTANCE = instance
                 instance

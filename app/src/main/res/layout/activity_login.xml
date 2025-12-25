@@ -8,6 +8,13 @@
     android:background="@drawable/bg_login"
     android:orientation="vertical"
     tools:context=".ui.auth.login.LoginActivity">
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Nhóm 10 - Quang Dinh"
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
+        android:gravity="center" />
 
     <TextView
         android:layout_width="match_parent"

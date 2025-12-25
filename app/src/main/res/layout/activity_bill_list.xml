@@ -1,132 +1,113 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#F5F5F5"
     android:orientation="vertical"
-    android:background="#F5F5F5">
+    tools:context=".ui.history_bill.BillListActivity">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#FFEB3B"
+        android:gravity="center"
+        android:padding="8dp"
+        android:text="Nhóm 10 - Nguyễn Thành Tài"
+        android:textColor="#F44336"
+        android:textSize="20sp"
+        android:textStyle="bold" />
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:padding="16dp"
+        android:layout_height="?attr/actionBarSize"
         android:background="#FFFFFF"
-        android:elevation="4dp">
+        android:elevation="4dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="10dp">
 
         <ImageButton
             android:id="@+id/btnBack"
-            android:src="@drawable/ic_arrow_back"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:layout_width="48dp"
-            android:layout_height="48dp"/>
+            android:padding="8dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_arrow_back"
+            app:tint="#333333" />
 
         <TextView
-            android:text="Lịch Sử Hóa Đơn"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:textColor="#333333"
+            android:id="@+id/tvTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
             android:layout_weight="1"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"/>
+            android:text="Lịch sử Hóa đơn"
+            android:textColor="#333333"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <ImageButton
+            android:id="@+id/btnFilter"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/bg_filter_button"
+            app:tint="#555555" />
 
         <ImageButton
             android:id="@+id/btnAdd"
-            android:src="@android:drawable/ic_input_add"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="4dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            app:tint="#2196F3"
-            android:layout_width="48dp"
-            android:layout_height="48dp"/>
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:src="@android:drawable/ic_input_add"
+            app:tint="#2196F3" />
 
         <ImageButton
             android:id="@+id/btnAnalytics"
-            android:src="@android:drawable/ic_menu_sort_by_size"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="4dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            app:tint="#FF9800"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_marginEnd="4dp"/>
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:src="@android:drawable/ic_menu_sort_by_size"
+            app:tint="#FF9800" />
+
     </LinearLayout>
 
-    <HorizontalScrollView
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:scrollbars="none"
-        android:paddingVertical="10dp"
-        android:paddingHorizontal="8dp"
-        android:clipToPadding="false">
+        android:layout_height="match_parent"
+        android:padding="12dp">
 
-        <LinearLayout
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvHoaDon"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="80dp" />
+
+        <TextView
+            android:id="@+id/tvEmpty"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:layout_gravity="center"
+            android:drawablePadding="16dp"
+            android:gravity="center"
+            android:text="Chưa có hóa đơn nào.\nNhấn dấu + để thêm mới."
+            android:textColor="#9E9E9E"
+            android:textSize="16sp"
+            android:visibility="gone"
+            app:drawableTopCompat="@android:drawable/ic_menu_report_image" />
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipAll"
-                android:text="Tất cả"
-                android:checked="true"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
-                android:layout_marginEnd="8dp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipDien"
-                android:text="⚡ Điện"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
-                android:layout_marginEnd="8dp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipNuoc"
-                android:text="💧 Nước"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
-                android:layout_marginEnd="8dp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipUnpaid"
-                android:text="Chưa thanh toán"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
-                android:textColor="#F44336"
-                android:layout_marginEnd="8dp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
-        </LinearLayout>
-    </HorizontalScrollView>
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvHoaDon"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:padding="8dp"
-        android:clipToPadding="false"/>
-
-    <LinearLayout
-        android:id="@+id/layoutEmpty"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:visibility="gone">
-
-        <ImageView
-            android:src="@android:drawable/ic_menu_report_image"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            app:tint="#CCCCCC"/>
-        <TextView
-            android:text="Chưa có hóa đơn nào"
-            android:textColor="#999999"
-            android:layout_marginTop="10dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-    </LinearLayout>
+    </FrameLayout>
 
 </LinearLayout>

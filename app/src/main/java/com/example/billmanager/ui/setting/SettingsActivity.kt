@@ -23,8 +23,6 @@ import kotlinx.coroutines.launch
 class SettingsActivity : AppCompatActivity() {
 
     private lateinit var appDataStore: AppDataStore
-
-    // Controls
     private lateinit var tvTitle: TextView
     private lateinit var btnBack: ImageButton
     private lateinit var btnNavNotification: LinearLayout
@@ -32,6 +30,7 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var switchDarkMode: Switch
     private lateinit var btnClearData: Button
     private lateinit var tvVersion: TextView
+    private lateinit var btnNavHelp: LinearLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,6 +53,7 @@ class SettingsActivity : AppCompatActivity() {
         switchDarkMode = findViewById(R.id.switchDarkMode)
         btnClearData = findViewById(R.id.btnClearData)
         tvVersion = findViewById(R.id.tvVersion)
+        btnNavHelp = findViewById(R.id.btnNavHelp)
     }
 
     private fun loadSettings() {
@@ -73,6 +73,10 @@ class SettingsActivity : AppCompatActivity() {
 
         btnNavLocationBackup.setOnClickListener {
             startActivity(Intent(this, LocationActivity::class.java))
+        }
+
+        btnNavHelp.setOnClickListener {
+            startActivity(Intent(this, HelpActivity::class.java))
         }
 
         switchDarkMode.setOnCheckedChangeListener { _, isChecked ->

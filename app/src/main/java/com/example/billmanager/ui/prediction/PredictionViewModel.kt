@@ -7,79 +7,79 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.billmanager.data.local.database.AppDatabase
 import com.example.billmanager.data.local.entity.HoaDonEntity
-import com.example.billmanager.data.repository.BudgetRepository
-import com.example.billmanager.data.repository.HoaDonRepository
+import com.example.billmanager.utils.UserSession
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.util.Calendar
 
 class PredictionViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val billRepo: HoaDonRepository
-    private val budgetRepo: BudgetRepository
+    private val db = AppDatabase.getInstance(application)
+    private val billDao = db.hoaDonDao()
+    private val userSession = UserSession(application)
 
-    // LiveData chứa kết quả dự báo
     private val _predictionData = MutableLiveData<PredictionResult>()
     val predictionData: LiveData<PredictionResult> = _predictionData
 
-    // Data Class chứa kết quả trả về cho UI
     data class PredictionResult(
         val totalPredicted: Double,
         val electricPredicted: Double,
         val waterPredicted: Double,
-        val budgetTotal: Double,
         val historyElectric: List<Double>,
         val historyWater: List<Double>,
+        val realMonths: List<String>,
         val message: String
     )
 
-    init {
-        val db = AppDatabase.getInstance(application)
-        billRepo = HoaDonRepository(db.hoaDonDao())
-        budgetRepo = BudgetRepository(db.budgetDao())
-    }
-
     fun calculatePrediction() {
         viewModelScope.launch(Dispatchers.IO) {
-            val allBills = billRepo.getAll()
+            val email = userSession.getUserEmail() ?: ""
 
-            // 1. Lấy dữ liệu lịch sử
-            val electricHistory = getHistoryData(allBills, "Điện")
-            val waterHistory = getHistoryData(allBills, "Nước")
+            // QUAN TRỌNG: Lấy dữ liệu của User hiện tại
+            val allBills = billDao.getBillsByUser(email)
 
-            // 2. Dự báo tháng tới
+            if (allBills.isEmpty()) {
+                // Xử lý khi chưa có dữ liệu
+                _predictionData.postValue(
+                    PredictionResult(
+                        0.0,
+                        0.0,
+                        0.0,
+                        emptyList(),
+                        emptyList(),
+                        emptyList(),
+                        "Chưa có dữ liệu để dự báo"
+                    )
+                )
+                return@launch
+            }
+
+            // Lấy 6 tháng gần nhất có dữ liệu (Dựa trên hóa đơn Điện làm chuẩn thời gian)
+            val sortedBills = allBills.filter { it.loai == "Điện" }
+                .sortedWith(compareBy({ it.nam }, { it.thang }))
+                .takeLast(6)
+
+            // Tạo danh sách nhãn tháng thật (VD: "T10", "T11")
+            val labels = sortedBills.map { "T${it.thang}" }
+
+            // Lấy dữ liệu giá trị tương ứng
+            val electricHistory = getHistoryData(allBills, "Điện", 6)
+            val waterHistory = getHistoryData(allBills, "Nước", 6)
+
             val predElectric = calculateMovingAverage(electricHistory)
             val predWater = calculateMovingAverage(waterHistory)
             val totalPred = predElectric + predWater
 
-            // 3. Lấy Budget hiện tại (Sử dụng hàm Sync chuẩn từ Repository)
-            val calendar = Calendar.getInstance()
-            val month = calendar.get(Calendar.MONTH) + 1
-            val year = calendar.get(Calendar.YEAR)
+            val msg =
+                if (labels.size < 3) "Cần ít nhất 3 tháng dữ liệu để dự báo chính xác" else "Dự báo dựa trên trung bình động 3 tháng gần nhất"
 
-            // Lấy ngân sách Điện + Nước
-            val elecBudget = budgetRepo.getBudgetSync(month, year, 1)?.amountLimit ?: 0.0
-            val waterBudget = budgetRepo.getBudgetSync(month, year, 2)?.amountLimit ?: 0.0
-            val budgetTotal = elecBudget + waterBudget
-
-            // 4. Tạo thông báo
-            val msg = if (budgetTotal > 0 && totalPred > budgetTotal) {
-                "⚠️ DỰ BÁO VƯỢT NGÂN SÁCH: ${String.format("%,.0f", totalPred - budgetTotal)}đ"
-            } else if (budgetTotal > 0) {
-                "✅ Dự báo nằm trong hạn mức an toàn."
-            } else {
-                "ℹ️ Chưa thiết lập hạn mức (Budget) tháng này."
-            }
-
-            // 5. Post kết quả
             _predictionData.postValue(
                 PredictionResult(
                     totalPredicted = totalPred,
                     electricPredicted = predElectric,
                     waterPredicted = predWater,
-                    budgetTotal = budgetTotal,
                     historyElectric = electricHistory,
                     historyWater = waterHistory,
+                    realMonths = labels,
                     message = msg
                 )
             )
@@ -87,11 +87,15 @@ class PredictionViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     // Hàm lấy danh sách tổng tiền 6 tháng gần nhất
-    private fun getHistoryData(allBills: List<HoaDonEntity>, type: String): List<Double> {
+    private fun getHistoryData(
+        allBills: List<HoaDonEntity>,
+        type: String,
+        limit: Int
+    ): List<Double> {
         return allBills
             .filter { it.loai == type }
-            .sortedWith(compareBy({ it.nam }, { it.thang })) // Sort cũ -> mới
-            .takeLast(6) // Lấy 6 tháng cuối
+            .sortedWith(compareBy({ it.nam }, { it.thang }))
+            .takeLast(limit)
             .map { it.tongTien.toDouble() }
     }
 

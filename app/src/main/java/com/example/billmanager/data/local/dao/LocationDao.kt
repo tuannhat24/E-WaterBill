@@ -5,13 +5,11 @@ import com.example.billmanager.data.local.entity.LocationEntity
 
 @Dao
 interface LocationDao {
-    @Query("SELECT * FROM locations")
-    fun getAll(): List<LocationEntity>
+    // Lấy địa điểm của User
+    @Query("SELECT * FROM locations WHERE userEmail = :email")
+    fun getLocationsByUser(email: String): List<LocationEntity>
 
-    @Query("SELECT * FROM locations WHERE isSelected = 1 LIMIT 1")
-    fun getSelectedLocation(): LocationEntity?
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert
     fun insert(location: LocationEntity)
 
     @Update
@@ -20,11 +18,11 @@ interface LocationDao {
     @Delete
     fun delete(location: LocationEntity)
 
-    // Reset tất cả về không chọn
-    @Query("UPDATE locations SET isSelected = 0")
-    fun unselectAll()
+    // Bỏ chọn tất cả của User này (để chọn cái mới)
+    @Query("UPDATE locations SET isSelected = 0 WHERE userEmail = :email")
+    fun unselectAllByUser(email: String)
 
-    // Đếm số lượng
-    @Query("SELECT COUNT(*) FROM locations")
-    fun count(): Int
+    // Đếm số địa điểm của User
+    @Query("SELECT COUNT(*) FROM locations WHERE userEmail = :email")
+    fun countByUser(email: String): Int
 }

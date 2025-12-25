@@ -3,11 +3,9 @@ package com.example.billmanager
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.widget.Button
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.cardview.widget.CardView
@@ -17,15 +15,15 @@ import com.example.billmanager.data.local.database.AppDatabase
 import com.example.billmanager.data.local.datastore.AppDataStore
 import com.example.billmanager.ui.auth.login.LoginActivity
 import com.example.billmanager.ui.auth.profile.ProfileActivity
+import com.example.billmanager.ui.auth.user_management.UserManagementMainActivity
 import com.example.billmanager.ui.budget.BudgetActivity
-import com.example.billmanager.ui.history_bill.BillListActivity // Mod 3: Danh sách & Phân tích
-import com.example.billmanager.ui.input.InputBillActivity       // Mod 2: Nhập liệu
+import com.example.billmanager.ui.history_bill.BillListActivity
+import com.example.billmanager.ui.input.InputBillActivity
 import com.example.billmanager.ui.location.LocationActivity
 import com.example.billmanager.ui.notification.NotificationsActivity
 import com.example.billmanager.ui.notification.NotificationViewModel
 import com.example.billmanager.ui.prediction.PredictionActivity
 import com.example.billmanager.ui.settings.SettingsActivity
-import com.example.billmanager.utils.ReminderReceiver
 import com.example.billmanager.utils.UserSession
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -48,9 +46,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var cardNotifications: CardView
     private lateinit var cardPrediction: CardView
     private lateinit var cardLocation: CardView
-
-    // Test
-    private lateinit var btnTestNotify: Button
+    private lateinit var cardAdminUser: CardView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,7 +54,8 @@ class MainActivity : AppCompatActivity() {
         // Chạy coroutine trên lifecycleScope của Activity để lấy setting
         lifecycleScope.launch {
             val isDark = dataStore.darkModeFlow.first()
-            val mode = if (isDark) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
+            val mode =
+                if (isDark) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
 
             // Chỉ set nếu chế độ hiện tại khác với chế độ đã lưu (để tránh nháy màn hình)
             if (AppCompatDelegate.getDefaultNightMode() != mode) {
@@ -81,6 +78,7 @@ class MainActivity : AppCompatActivity() {
 
         setControl()
         setEvent()
+        checkAdminRole()
         loadUserProfile()
         observeNotifications()
     }
@@ -106,7 +104,7 @@ class MainActivity : AppCompatActivity() {
         cardNotifications = findViewById(R.id.cardNotifications)
         cardPrediction = findViewById(R.id.cardPrediction)
         cardLocation = findViewById(R.id.cardLocation)
-        btnTestNotify = findViewById(R.id.btnTestNotify)
+        cardAdminUser = findViewById(R.id.cardAdminUser)
     }
 
     private fun loadUserProfile() {
@@ -123,11 +121,26 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    //Kiểm tra quyền
+    private fun checkAdminRole() {
+        val role = userSession.getUserRole()
+        if (role == "Admin") {
+            cardAdminUser.visibility = android.view.View.VISIBLE
+        } else {
+            cardAdminUser.visibility = android.view.View.GONE
+        }
+    }
+
     private fun setEvent() {
         // --- MODULE 1: PROFILE ---
         imgAvatar.setOnClickListener {
             startActivity(Intent(this, ProfileActivity::class.java))
         }
+        // Admin
+        cardAdminUser.setOnClickListener {
+            startActivity(Intent(this, UserManagementMainActivity::class.java))
+        }
+
 
         // --- MODULE 2: BILL MANAGER ---
         cardInputBill.setOnClickListener {
@@ -157,17 +170,11 @@ class MainActivity : AppCompatActivity() {
         cardPrediction.setOnClickListener {
             startActivity(Intent(this, PredictionActivity::class.java))
         }
-
-        // Developer Test Button
-        btnTestNotify.setOnClickListener {
-            val intent = Intent(this, ReminderReceiver::class.java)
-            sendBroadcast(intent)
-            Toast.makeText(this, "Đã gửi Broadcast Notification!", Toast.LENGTH_SHORT).show()
-        }
     }
 
     private fun observeNotifications() {
-        notificationViewModel.allNotifications.observe(this) { notifications ->
+        // --- SỬA LỖI: Dùng biến notifications của ViewModel ---
+        notificationViewModel.notifications.observe(this) { notifications ->
             val unreadCount = notifications.count { !it.isRead }
             if (unreadCount > 0) {
                 tvUnreadCount.text = if (unreadCount > 99) "99+" else unreadCount.toString()

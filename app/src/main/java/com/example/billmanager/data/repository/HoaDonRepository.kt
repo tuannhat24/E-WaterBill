@@ -8,6 +8,8 @@ class HoaDonRepository(private val dao: HoaDonDao) {
 
     fun getAll(): List<HoaDonEntity> = dao.getAll()
 
+    fun getBillsByUser(email: String): List<HoaDonEntity> = dao.getBillsByUser(email)
+
     fun insert(entity: HoaDonEntity) = dao.insert(entity)
 
     fun update(entity: HoaDonEntity) = dao.update(entity)

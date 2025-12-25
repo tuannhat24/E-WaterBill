@@ -4,9 +4,8 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import android.widget.*
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -15,6 +14,11 @@ import com.example.billmanager.data.local.database.AppDatabase
 import com.example.billmanager.data.local.entity.LocationEntity
 import com.example.billmanager.data.local.dao.LocationDao
 import com.example.billmanager.utils.BackupHelper
+import com.example.billmanager.utils.UserSession
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -33,6 +37,20 @@ class LocationActivity : AppCompatActivity() {
     private lateinit var db: AppDatabase
     private lateinit var locationDao: LocationDao
     private lateinit var adapter: LocationAdapter
+    private lateinit var userSession: UserSession
+
+    // Trình chọn file import
+    private val importLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == android.app.Activity.RESULT_OK) {
+                val uri = result.data?.data
+                if (uri != null) {
+                    val msg = BackupHelper.importFromUri(this, uri)
+                    showAlert(msg)
+                    loadData()
+                }
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,22 +58,29 @@ class LocationActivity : AppCompatActivity() {
 
         db = AppDatabase.getInstance(this)
         locationDao = db.locationDao()
+        userSession = UserSession(this)
 
-        // Tạo dữ liệu mặc định nếu chưa có
-        if (locationDao.count() == 0) {
-            locationDao.insert(
-                LocationEntity(
-                    name = "Nhà riêng",
-                    address = "Mặc định",
-                    type = "Nhà riêng",
-                    isSelected = true
+        // Kiểm tra và tạo dữ liệu mặc định CHO USER NÀY nếu chưa có
+        val email = userSession.getUserEmail() ?: ""
+        CoroutineScope(Dispatchers.IO).launch {
+            if (locationDao.countByUser(email) == 0) {
+                locationDao.insert(
+                    LocationEntity(
+                        name = "Nhà riêng",
+                        address = "Mặc định",
+                        type = "Nhà riêng",
+                        isSelected = true,
+                        userEmail = email
+                    )
                 )
-            )
+            }
+            // Sau khi insert xong mới load data
+            withContext(Dispatchers.Main) {
+                setControl()
+                loadData()
+                setEvent()
+            }
         }
-
-        setControl()
-        loadData()
-        setEvent()
     }
 
     private fun setControl() {
@@ -79,16 +104,33 @@ class LocationActivity : AppCompatActivity() {
     }
 
     private fun loadData() {
-        val list = locationDao.getAll()
-        adapter.updateList(list)
+        val email = userSession.getUserEmail() ?: ""
 
-        // Cập nhật Dashboard cho địa điểm đang chọn
-        val selected = list.find { it.isSelected } ?: list.firstOrNull()
-        if (selected != null) {
-            tvCurrentLocationName.text = "Đang chọn: ${selected.name} (${selected.type})"
+        CoroutineScope(Dispatchers.IO).launch {
+            // 1. Lấy danh sách địa điểm của User
+            val list = locationDao.getLocationsByUser(email)
 
-            // Tính toán sơ bộ (Overview)
-            val bills = db.hoaDonDao().getAll().filter { it.locationId == selected.id }
+            withContext(Dispatchers.Main) {
+                adapter.updateList(list)
+
+                // 2. Cập nhật Dashboard
+                val selected = list.find { it.isSelected } ?: list.firstOrNull()
+                if (selected != null) {
+                    tvCurrentLocationName.text = "Đang chọn: ${selected.name} (${selected.type})"
+                    updateStats(selected.id, email)
+                } else {
+                    tvCurrentLocationName.text = "Chưa chọn địa điểm"
+                    tvLocationStats.text = "---"
+                }
+            }
+        }
+    }
+
+    private fun updateStats(locationId: Int, email: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            // Lấy hóa đơn của User tại địa điểm này
+            val bills = db.hoaDonDao().getBillsByUser(email).filter { it.locationId == locationId }
+
             val currentYear = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)
             val thisMonth = java.util.Calendar.getInstance().get(java.util.Calendar.MONTH) + 1
 
@@ -96,10 +138,12 @@ class LocationActivity : AppCompatActivity() {
             val totalMonth = bills.filter { it.nam == currentYear && it.thang == thisMonth }
                 .sumOf { it.tongTien }
 
-            val formatVND = NumberFormat.getCurrencyInstance(Locale("vi", "VN"))
-            tvLocationStats.text = "Chi phí T$thisMonth: ${formatVND.format(totalMonth)}\n" +
-                    "Tổng chi phí năm $currentYear: ${formatVND.format(totalYear)}\n" +
-                    "Tổng số hóa đơn: ${bills.size}"
+            withContext(Dispatchers.Main) {
+                val formatVND = NumberFormat.getCurrencyInstance(Locale("vi", "VN"))
+                tvLocationStats.text = "Chi phí T$thisMonth: ${formatVND.format(totalMonth)}\n" +
+                        "Tổng chi phí năm $currentYear: ${formatVND.format(totalYear)}\n" +
+                        "Tổng số hóa đơn: ${bills.size}"
+            }
         }
     }
 
@@ -116,9 +160,11 @@ class LocationActivity : AppCompatActivity() {
         }
 
         btnRestore.setOnClickListener {
-            val msg = BackupHelper.importData(this)
-            showAlert(msg)
-            loadData() // Load lại UI sau khi import
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "application/json"
+            }
+            importLauncher.launch(intent)
         }
 
         btnCleanStorage.setOnClickListener {
@@ -128,6 +174,7 @@ class LocationActivity : AppCompatActivity() {
                 .setPositiveButton("Xóa") { _, _ ->
                     val count = BackupHelper.deleteOldData(this)
                     Toast.makeText(this, "Đã xóa $count hóa đơn cũ.", Toast.LENGTH_SHORT).show()
+                    loadData()
                 }
                 .setNegativeButton("Hủy", null)
                 .show()
@@ -140,7 +187,6 @@ class LocationActivity : AppCompatActivity() {
         val edtAddress = view.findViewById<EditText>(R.id.edtAddress)
         val spnType = view.findViewById<Spinner>(R.id.spnType)
 
-        // Setup Spinner
         val types = arrayOf("Nhà riêng", "Chung cư", "Phòng trọ", "Khác")
         spnType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, types)
 
@@ -160,18 +206,28 @@ class LocationActivity : AppCompatActivity() {
                 val type = spnType.selectedItem.toString()
 
                 if (name.isNotEmpty()) {
-                    if (loc == null) {
-                        locationDao.insert(
-                            LocationEntity(
-                                name = name,
-                                address = address,
-                                type = type
+                    val email = userSession.getUserEmail() ?: ""
+                    CoroutineScope(Dispatchers.IO).launch {
+                        if (loc == null) {
+                            locationDao.insert(
+                                LocationEntity(
+                                    name = name,
+                                    address = address,
+                                    type = type,
+                                    userEmail = email
+                                )
                             )
-                        )
-                    } else {
-                        locationDao.update(loc.copy(name = name, address = address, type = type))
+                        } else {
+                            locationDao.update(
+                                loc.copy(
+                                    name = name,
+                                    address = address,
+                                    type = type
+                                )
+                            )
+                        }
+                        runOnUiThread { loadData() }
                     }
-                    loadData()
                 }
             }
             .setNegativeButton("Hủy", null)
@@ -179,23 +235,37 @@ class LocationActivity : AppCompatActivity() {
     }
 
     private fun handleLocationAction(loc: LocationEntity, action: String) {
-        when (action) {
-            "SELECT" -> {
-                locationDao.unselectAll()
-                locationDao.update(loc.copy(isSelected = true))
-                loadData()
-                Toast.makeText(this, "Đã chuyển sang: ${loc.name}", Toast.LENGTH_SHORT).show()
-            }
+        val email = userSession.getUserEmail() ?: ""
+        CoroutineScope(Dispatchers.IO).launch {
+            when (action) {
+                "SELECT" -> {
+                    locationDao.unselectAllByUser(email) // Chỉ bỏ chọn của user này
+                    locationDao.update(loc.copy(isSelected = true))
+                    runOnUiThread {
+                        loadData()
+                        Toast.makeText(
+                            this@LocationActivity,
+                            "Đã chuyển sang: ${loc.name}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
 
-            "EDIT" -> showAddEditDialog(loc)
-            "DELETE" -> {
-                // Check xem có hóa đơn không trước khi xóa (Constraint)
-                val count = db.hoaDonDao().getAll().count { it.locationId == loc.id }
-                if (count > 0) {
-                    showAlert("Không thể xóa! Địa điểm này đang chứa $count hóa đơn.")
-                } else {
-                    locationDao.delete(loc)
-                    loadData()
+                "EDIT" -> runOnUiThread { showAddEditDialog(loc) }
+                "DELETE" -> {
+                    // Check ràng buộc hóa đơn
+                    val count =
+                        db.hoaDonDao().getBillsByUser(email).count { it.locationId == loc.id }
+                    runOnUiThread {
+                        if (count > 0) {
+                            showAlert("Không thể xóa! Địa điểm này đang chứa $count hóa đơn.")
+                        } else {
+                            CoroutineScope(Dispatchers.IO).launch {
+                                locationDao.delete(loc)
+                                runOnUiThread { loadData() }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -203,52 +273,5 @@ class LocationActivity : AppCompatActivity() {
 
     private fun showAlert(msg: String) {
         AlertDialog.Builder(this).setMessage(msg).setPositiveButton("OK", null).show()
-    }
-
-    // INNER ADAPTER CLASS
-    inner class LocationAdapter(
-        private var list: List<LocationEntity>,
-        private val onAction: (LocationEntity, String) -> Unit
-    ) : RecyclerView.Adapter<LocationAdapter.VH>() {
-
-        inner class VH(v: View) : RecyclerView.ViewHolder(v) {
-            val tvName: TextView = v.findViewById(android.R.id.text1)
-            val tvAddress: TextView = v.findViewById(android.R.id.text2)
-            val btnSwitch: Button = v.findViewById(R.id.btnSwitch)
-            val btnEdit: ImageButton = v.findViewById(R.id.btnEdit)
-            val btnDelete: ImageButton = v.findViewById(R.id.btnDelete)
-            val root: View = v.findViewById(R.id.rootLayout)
-        }
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-            val v =
-                LayoutInflater.from(parent.context).inflate(R.layout.item_location, parent, false)
-            return VH(v)
-        }
-
-        override fun onBindViewHolder(holder: VH, position: Int) {
-            val item = list[position]
-            holder.tvName.text = item.name
-            holder.tvAddress.text = "${item.address} - ${item.type}"
-
-            if (item.isSelected) {
-                holder.root.setBackgroundColor(android.graphics.Color.parseColor("#E0F2F1"))
-                holder.btnSwitch.text = "Đang chọn"
-                holder.btnSwitch.isEnabled = false
-            } else {
-                holder.root.setBackgroundColor(android.graphics.Color.WHITE)
-                holder.btnSwitch.text = "Chọn"
-                holder.btnSwitch.isEnabled = true
-            }
-
-            holder.btnSwitch.setOnClickListener { onAction(item, "SELECT") }
-            holder.btnEdit.setOnClickListener { onAction(item, "EDIT") }
-            holder.btnDelete.setOnClickListener { onAction(item, "DELETE") }
-        }
-
-        override fun getItemCount() = list.size
-        fun updateList(newList: List<LocationEntity>) {
-            list = newList; notifyDataSetChanged()
-        }
     }
 }

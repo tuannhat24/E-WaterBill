@@ -7,6 +7,17 @@
     android:orientation="vertical"
     android:background="#F5F7FA">
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#FFEB3B"
+        android:gravity="center"
+        android:padding="8dp"
+        android:text="Nhóm 10 - Bùi Nhật Tuấn"
+        android:textColor="#F44336"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
     <!-- HEADER -->
     <include
         android:id="@+id/layoutHeader"

@@ -9,7 +9,8 @@ data class NotificationEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val title: String,
     val message: String,
-    val type: NotificationType,
-    val timestamp: Long,
-    val isRead: Boolean = false
+    val date: String,
+    val type: String,
+    val isRead: Boolean = false,
+    val userEmail: String = ""
 )

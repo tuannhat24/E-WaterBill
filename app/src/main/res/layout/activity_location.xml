@@ -5,6 +5,17 @@
     android:background="#F5F5F5"
     android:orientation="vertical">
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#FFEB3B"
+        android:gravity="center"
+        android:padding="8dp"
+        android:text="Nhóm 10 - Bùi Lộc Thành"
+        android:textColor="#F44336"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
     <include
         android:id="@+id/layoutHeader"
         layout="@layout/layout_header" />

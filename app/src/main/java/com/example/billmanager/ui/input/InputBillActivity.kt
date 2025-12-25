@@ -8,10 +8,10 @@ import com.example.billmanager.data.local.database.AppDatabase
 import com.example.billmanager.data.local.entity.HoaDonEntity
 import com.example.billmanager.data.local.entity.LocationEntity
 import com.example.billmanager.data.local.entity.NotificationEntity
-import com.example.billmanager.data.model.NotificationType
 import com.example.billmanager.data.repository.HoaDonRepository
 import com.example.billmanager.utils.BillCalculator
 import com.example.billmanager.utils.NotificationHelper
+import com.example.billmanager.utils.UserSession
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -44,13 +44,9 @@ class InputBillActivity : AppCompatActivity() {
         val db = AppDatabase.getInstance(this)
         repository = HoaDonRepository(db.hoaDonDao())
 
-        // 1. Ánh xạ View
         setControl()
-
-        // 2. Load Spinner
         loadLocationSpinner()
 
-        // 3. Kiểm tra Edit
         if (intent.hasExtra("BILL_EDIT")) {
             billToEdit = intent.getSerializableExtra("BILL_EDIT") as HoaDonEntity
             fillDataToEdit(billToEdit!!)
@@ -77,15 +73,41 @@ class InputBillActivity : AppCompatActivity() {
     }
 
     private fun loadLocationSpinner() {
-        listLocation = AppDatabase.getInstance(this).locationDao().getAll()
-        val locationNames = if (listLocation.isNotEmpty()) listLocation.map { it.name } else listOf("Mặc định")
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, locationNames)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spnLocation.adapter = adapter
+        val userSession = UserSession(this)
+        val email = userSession.getUserEmail() ?: ""
 
-        if (listLocation.isNotEmpty()) {
-            val activeIndex = listLocation.indexOfFirst { it.isSelected }
-            if (activeIndex >= 0) spnLocation.setSelection(activeIndex)
+        // Chạy Coroutine để lấy dữ liệu từ DB
+        CoroutineScope(Dispatchers.IO).launch {
+            listLocation = AppDatabase.getInstance(this@InputBillActivity).locationDao()
+                .getLocationsByUser(email)
+
+            // Cập nhật giao diện phải quay về Main Thread
+            runOnUiThread {
+                val locationNames = if (listLocation.isNotEmpty())
+                    listLocation.map { it.name }
+                else
+                    listOf("Mặc định")
+
+                val adapter = ArrayAdapter(
+                    this@InputBillActivity,
+                    android.R.layout.simple_spinner_item,
+                    locationNames
+                )
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                spnLocation.adapter = adapter
+
+                if (listLocation.isNotEmpty()) {
+                    // Nếu đang Edit hóa đơn cũ, ưu tiên chọn location của hóa đơn đó
+                    if (billToEdit != null) {
+                        val index = listLocation.indexOfFirst { it.id == billToEdit!!.locationId }
+                        if (index >= 0) spnLocation.setSelection(index)
+                    } else {
+                        // Nếu thêm mới, chọn cái mặc định (isSelected = true)
+                        val activeIndex = listLocation.indexOfFirst { it.isSelected }
+                        if (activeIndex >= 0) spnLocation.setSelection(activeIndex)
+                    }
+                }
+            }
         }
     }
 
@@ -140,7 +162,11 @@ class InputBillActivity : AppCompatActivity() {
         val currentTime = Calendar.getInstance().time
         val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
         val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-        val locationId = if (listLocation.isNotEmpty()) listLocation[spnLocation.selectedItemPosition].id else 1
+        val locationId =
+            if (listLocation.isNotEmpty()) listLocation[spnLocation.selectedItemPosition].id else 1
+
+        val userSession = UserSession(this)
+        val currentUserEmail = userSession.getUserEmail() ?: ""
 
         val hoaDon = HoaDonEntity(
             id = billToEdit?.id ?: 0,
@@ -154,77 +180,99 @@ class InputBillActivity : AppCompatActivity() {
             gio = billToEdit?.gio ?: timeFormat.format(currentTime),
             ngay = billToEdit?.ngay ?: dateFormat.format(currentTime),
             trangThai = billToEdit?.trangThai ?: "Chưa thanh toán",
-            locationId = locationId
+            locationId = locationId,
+            userEmail = currentUserEmail
         )
 
         if (billToEdit != null) {
             repository.update(hoaDon)
-            // Kiểm tra Budget sau khi Sửa
-            checkBudgetAndNotify(hoaDon)
+            checkBudgetAndNotify(hoaDon, currentUserEmail)
             Toast.makeText(this, "Đã cập nhật hóa đơn!", Toast.LENGTH_SHORT).show()
         } else {
             repository.insert(hoaDon)
-            // Bắn thông báo thêm mới
-            triggerNotification(hoaDon)
-            // Kiểm tra Budget sau khi Thêm
-            checkBudgetAndNotify(hoaDon)
+            triggerNotification(hoaDon, currentUserEmail)
+            checkBudgetAndNotify(hoaDon, currentUserEmail)
             Toast.makeText(this, "Đã thêm hóa đơn mới!", Toast.LENGTH_SHORT).show()
         }
 
         finish()
     }
 
-    // Thông báo đã thêm hóa đơn
-    private fun triggerNotification(hoaDon: HoaDonEntity) {
+    private fun triggerNotification(hoaDon: HoaDonEntity, email: String) {
         CoroutineScope(Dispatchers.IO).launch {
             val db = AppDatabase.getInstance(this@InputBillActivity)
             val notiTitle = "Hóa đơn mới: ${hoaDon.loai}"
-            val notiMsg = "T${hoaDon.thang}/${hoaDon.nam}: ${String.format("%,d", hoaDon.tongTien)}đ"
-            val notiType = if (hoaDon.loai == "Điện") NotificationType.ELECTRIC else NotificationType.WATER
+            val notiMsg =
+                "T${hoaDon.thang}/${hoaDon.nam}: ${String.format("%,d", hoaDon.tongTien)}đ"
+            val currentDate =
+                SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date())
 
+            // Lưu vào DB (Lưu chuỗi String cho type)
             val newNoti = NotificationEntity(
-                title = notiTitle, message = notiMsg, type = notiType, timestamp = System.currentTimeMillis()
+                title = notiTitle,
+                message = notiMsg,
+                type = "INFO",
+                date = currentDate,
+                isRead = false,
+                userEmail = email
             )
-            db.notificationDao().insertNotification(newNoti)
+            db.notificationDao().insert(newNoti)
 
+            // Hiển thị thông báo (Convert sang Enum cho Helper)
             runOnUiThread {
+                val helperType = if (hoaDon.loai == "Điện")
+                    com.example.billmanager.data.model.NotificationType.ELECTRIC
+                else
+                    com.example.billmanager.data.model.NotificationType.WATER
+
                 NotificationHelper(this@InputBillActivity).showNotification(
-                    notiTitle, notiMsg, (System.currentTimeMillis() % 10000).toInt(), notiType
+                    notiTitle, notiMsg, (System.currentTimeMillis() % 10000).toInt(), helperType
                 )
             }
         }
     }
 
-    // Kiểm tra vượt hạn mức
-    private fun checkBudgetAndNotify(bill: HoaDonEntity) {
+    private fun checkBudgetAndNotify(bill: HoaDonEntity, email: String) {
         CoroutineScope(Dispatchers.IO).launch {
             val db = AppDatabase.getInstance(this@InputBillActivity)
-            val typeId = if (bill.loai == "Điện") 1 else 2 // 1: Điện, 2: Nước
+            val typeId = if (bill.loai == "Điện") 1 else 2
 
-            // 1. Lấy Budget của tháng/năm/loại tương ứng (Dùng hàm Sync vừa thêm trong DAO)
-            val budget = db.budgetDao().getBudgetSync(bill.thang, bill.nam, typeId)
+            val budget = db.budgetDao().getBudgetSyncByUser(bill.thang, bill.nam, typeId, email)
 
             if (budget != null) {
-                // 2. Tính tổng tiền đã tiêu cho loại này trong tháng này
-                val allBills = db.hoaDonDao().getAll()
+                val allBills = db.hoaDonDao().getBillsByUser(email)
                 val totalSpent = allBills
                     .filter { it.loai == bill.loai && it.thang == bill.thang && it.nam == bill.nam }
                     .sumOf { it.tongTien }
 
-                // 3. So sánh
                 if (totalSpent > budget.amountLimit) {
                     val diff = totalSpent - budget.amountLimit
                     val title = "⚠️ CẢNH BÁO CHI TIÊU"
-                    val msg = "Tiền ${bill.loai} T${bill.thang} vượt hạn mức ${String.format("%,.0f", diff)}đ!"
+                    val msg = "Tiền ${bill.loai} T${bill.thang} vượt hạn mức ${
+                        String.format(
+                            "%,.0f",
+                            diff
+                        )
+                    }đ!"
+                    val currentDate =
+                        SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date())
 
                     val noti = NotificationEntity(
-                        title = title, message = msg, type = NotificationType.WARNING, timestamp = System.currentTimeMillis()
+                        title = title,
+                        message = msg,
+                        type = "ALERT",
+                        date = currentDate,
+                        isRead = false,
+                        userEmail = email
                     )
-                    db.notificationDao().insertNotification(noti)
+                    db.notificationDao().insert(noti)
 
                     runOnUiThread {
                         NotificationHelper(this@InputBillActivity).showNotification(
-                            title, msg, (System.currentTimeMillis().toInt() + 1), NotificationType.WARNING
+                            title,
+                            msg,
+                            (System.currentTimeMillis().toInt() + 1),
+                            com.example.billmanager.data.model.NotificationType.WARNING
                         )
                     }
                 }

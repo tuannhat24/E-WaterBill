@@ -11,4 +11,6 @@ data class User(
     @ColumnInfo(name = "email") val email: String,
     @ColumnInfo(name = "phone_number") val phoneNumber: String,
     @ColumnInfo(name = "password") val password: String,
+    @ColumnInfo(name = "role") val role: String = "Customer",
+    @ColumnInfo(name = "is_active") val isActive: Boolean = true
 )

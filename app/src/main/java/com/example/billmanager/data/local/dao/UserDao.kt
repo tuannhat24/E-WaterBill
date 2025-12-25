@@ -28,6 +28,13 @@ interface UserDao {
     @Query("SELECT * FROM users WHERE email = :e AND password = :p")
     fun login(e: String, p: String): User?
 
+    @Query("UPDATE users SET is_active = :status WHERE id = :userId")
+    fun updateStatus(userId: Int, status: Boolean)
+
+    @Query("SELECT COUNT(*) FROM users WHERE role = 'Admin'")
+    fun countAdmin(): Int
+
+
 //    @Insert
 //    suspend fun insertUser(user: User)
 //

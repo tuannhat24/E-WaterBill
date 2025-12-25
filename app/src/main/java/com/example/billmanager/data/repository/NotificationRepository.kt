@@ -1,26 +1,31 @@
 package com.example.billmanager.data.repository
 
-import androidx.lifecycle.LiveData
 import com.example.billmanager.data.local.dao.NotificationDao
 import com.example.billmanager.data.local.entity.NotificationEntity
 
 class NotificationRepository(private val notificationDao: NotificationDao) {
 
-    val allNotifications: LiveData<List<NotificationEntity>> = notificationDao.getAllNotifications()
+    fun getAllNotifications(email: String): List<NotificationEntity> {
+        return notificationDao.getNotificationsByUser(email)
+    }
 
     suspend fun insert(notification: NotificationEntity) {
-        notificationDao.insertNotification(notification)
+        notificationDao.insert(notification)
     }
 
     suspend fun update(notification: NotificationEntity) {
-        notificationDao.updateNotification(notification)
+        notificationDao.update(notification)
     }
 
     suspend fun delete(notification: NotificationEntity) {
-        notificationDao.deleteNotification(notification)
+        notificationDao.delete(notification)
     }
 
-    suspend fun markAllRead() {
-        notificationDao.markAllAsRead()
+    suspend fun markAllRead(email: String) {
+        notificationDao.markAllAsRead(email)
+    }
+
+    suspend fun clearAll(email: String) {
+        notificationDao.clearAll(email)
     }
 }
